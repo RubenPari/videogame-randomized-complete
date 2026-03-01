@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 // Backend API configuration from environment variables
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
 /**
  * Centralized Axios instance with interceptors for authentication and error handling
@@ -40,7 +40,7 @@ httpClient.interceptors.response.use(
         console.warn('Unauthorized access. Redirecting to login...')
         // window.location.href = '/login' // Uncomment when auth routes exist
       }
-      
+
       // Handle 403 Forbidden
       if (error.response.status === 403) {
         console.warn('Access forbidden.')
