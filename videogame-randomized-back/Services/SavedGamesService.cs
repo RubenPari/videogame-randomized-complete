@@ -9,17 +9,12 @@ public class SavedGamesService
 {
     private readonly IMongoCollection<Game> _gamesCollection;
 
-    public SavedGamesService(IConfiguration config)
+    public SavedGamesService(IOptions<MongoDbSettings> mongoDbSettings)
     {
-        // Connection string should be like: mongodb://host:port/DatabaseName
-        // But for flexibility, let's parse the connection string or just use the database name from config if provided separately
-        // Here I'll assume the connection string includes the database name or we default to "VideogameDB"
-        
-        var connectionString = config.GetConnectionString("DefaultConnection");
-        var mongoUrl = MongoUrl.Create(connectionString);
-        var mongoClient = new MongoClient(mongoUrl);
-        var databaseName = mongoUrl.DatabaseName ?? "VideogameDB";
-        var mongoDatabase = mongoClient.GetDatabase(databaseName);
+        var settings = mongoDbSettings.Value;
+        // In case ConnectionString includes DB name, MongoUrl can parse it, but IOptions clarifies intent.
+        var mongoClient = new MongoClient(settings.ConnectionString);
+        var mongoDatabase = mongoClient.GetDatabase(settings.DatabaseName);
 
         _gamesCollection = mongoDatabase.GetCollection<Game>("Games");
     }
@@ -63,7 +58,7 @@ public class SavedGamesService
     public async Task<StatisticsDto> GetStatisticsAsync()
     {
         var games = await _gamesCollection.Find(_ => true).ToListAsync();
-        
+
         if (games.Count == 0)
         {
             return new StatisticsDto
@@ -100,7 +95,7 @@ public class SavedGamesService
                 foreach (var pWrapper in game.Platforms)
                 {
                     var pName = pWrapper.Platform.Name;
-                     if (!stats.PlatformCount.ContainsKey(pName))
+                    if (!stats.PlatformCount.ContainsKey(pName))
                         stats.PlatformCount[pName] = 0;
                     stats.PlatformCount[pName]++;
                 }

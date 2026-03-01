@@ -5,8 +5,13 @@ using videogame_randomized_back.Endpoints;
 using videogame_randomized_back.Mappers;
 using videogame_randomized_back.Services;
 using videogame_randomized_back.Validators;
+using videogame_randomized_back.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure MongoDbSettings
+builder.Services.Configure<MongoDbSettings>(
+    builder.Configuration.GetSection(MongoDbSettings.SectionName));
 
 // Add services to the container.
 builder.Services.AddSingleton<SavedGamesService>();
