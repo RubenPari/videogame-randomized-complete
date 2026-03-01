@@ -32,29 +32,36 @@ httpClient.interceptors.request.use(
 // Response Interceptor: Handle Global Errors (e.g., 401 Unauthorized)
 httpClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    // Dynamically import store to avoid Pinia initialization issues
+    const { useToastStore } = await import('@/stores/useToastStore')
+    const toastStore = useToastStore()
+
     if (error.response) {
       // Handle 401 Unauthorized
       if (error.response.status === 401) {
-        // Redirect to login or refresh token logic
         console.warn('Unauthorized access. Redirecting to login...')
-        // window.location.href = '/login' // Uncomment when auth routes exist
+        toastStore.showToast('Auth expired or invalid. Please reconnect.', 'error')
       }
 
       // Handle 403 Forbidden
-      if (error.response.status === 403) {
+      else if (error.response.status === 403) {
         console.warn('Access forbidden.')
+        toastStore.showToast('Forbidden access.', 'error')
       }
 
       // Handle 500 Server Error
-      if (error.response.status >= 500) {
+      else if (error.response.status >= 500) {
         console.error('Server error occurred.')
+        toastStore.showToast('Server error encountered. Please try again later.', 'error')
       }
     } else if (error.request) {
       // Network error (no response received)
       console.error('Network error. Please check your connection.')
+      toastStore.showToast('Network error. Connection failed.', 'error')
     } else {
       console.error('Error setting up request:', error.message)
+      toastStore.showToast('Client request error.', 'error')
     }
     return Promise.reject(error)
   }

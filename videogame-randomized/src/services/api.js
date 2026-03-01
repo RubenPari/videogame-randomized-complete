@@ -91,6 +91,24 @@ export default {
   },
 
   /**
+   * Retrieves screenshots of a specific game
+   * @param {number|string} gameId - Unique game ID
+   * @returns {Promise} Promise that resolves with the game screenshots
+   */
+  getGameScreenshots(gameId) {
+    return apiClient.get(`/games/${gameId}/screenshots`)
+  },
+
+  /**
+   * Retrieves trailers/movies of a specific game
+   * @param {number|string} gameId - Unique game ID
+   * @returns {Promise} Promise that resolves with the game movies
+   */
+  getGameMovies(gameId) {
+    return apiClient.get(`/games/${gameId}/movies`)
+  },
+
+  /**
    * Translates a game description from English to Italian
    * Uses the translation service and handles errors with fallback
    * @param {string} text - English text to translate
