@@ -8,10 +8,9 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      - MongoDbSettings__ConnectionString=mongodb://mongodb:27017
-      - MongoDbSettings__DatabaseName=VideogameDB
-    depends_on:
-      - mongodb
+      # GCP Project ID will be loaded from appsettings or GOOGLE_APPLICATION_CREDENTIALS for local run.
+      # Se si vuole forzare qui:
+      # - GoogleCloud__ProjectId=videogame-randomized-rilm8
 
   frontend:
     build:
@@ -27,14 +26,3 @@ services:
       - VITE_API_BASE_URL=http://localhost:8080/api
     depends_on:
       - backend
-
-  mongodb:
-    image: mongo:latest
-    container_name: mongodb
-    ports:
-      - "27017:27017"
-    volumes:
-      - db-data:/data/db
-
-volumes:
-  db-data:
