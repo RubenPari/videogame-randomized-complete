@@ -1,6 +1,9 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useVaultStore } from '@/stores/useVaultStore'
+import { useToastStore } from '@/stores/useToastStore'
+import api from '@/services/api'
+import GameMediaGallery from './GameMediaGallery.vue'
 
 const props = defineProps({
   game: { type: Object, default: null },
@@ -8,35 +11,60 @@ const props = defineProps({
 })
 
 const vault = useVaultStore()
+const toastSession = useToastStore()
 
 // Local UI State
-const showNotification = ref(false)
-const notificationType = ref('success')
-const notificationMessage = ref('')
+const screenshots = ref([])
+const videos = ref([])
+const isLoadingMedia = ref(false)
 
 // Computed
 const isSaved = computed(() => vault.isGameSaved(props.game?.id))
 
 // Methods
+const loadMediaData = async () => {
+  if (!props.game || !props.game.id) return
+
+  isLoadingMedia.value = true
+  screenshots.value = []
+  videos.value = []
+
+  try {
+    const [screenshotsRes, moviesRes] = await Promise.allSettled([
+      api.getGameScreenshots(props.game.id),
+      api.getGameMovies(props.game.id)
+    ])
+
+    if (screenshotsRes.status === 'fulfilled') {
+      screenshots.value = screenshotsRes.value.data?.results || []
+    }
+
+    if (moviesRes.status === 'fulfilled') {
+      videos.value = moviesRes.value.data?.results || []
+    }
+  } catch (error) {
+    console.error('Failed to load media for game:', error)
+  } finally {
+    isLoadingMedia.value = false
+  }
+}
+
+watch(() => props.game?.id, (newId) => {
+  if (newId) loadMediaData()
+}, { immediate: true })
+
 const toggleSaveGame = async () => {
   if (!props.game) return
 
   try {
     const saved = await vault.toggleGame(props.game)
-    showToast(
+    toastSession.showToast(
       saved ? 'Game saved to vault' : 'Game removed from vault',
       'success'
     )
   } catch {
-    showToast('Vault error: transmission failed', 'error')
+    toastSession.showToast('Vault error: transmission failed', 'error')
   }
-}
-
-const showToast = (message, type = 'success') => {
-  notificationMessage.value = message
-  notificationType.value = type
-  showNotification.value = true
-  setTimeout(() => (showNotification.value = false), 3000)
 }
 
 const formatDate = (dateString) => {
@@ -113,30 +141,14 @@ const formatDate = (dateString) => {
         </div>
       </div>
 
-      <!-- Description -->
-      <div class="flex-1">
-        <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">Database Entry</h3>
-        <div class="bg-zinc-950 border border-zinc-800 rounded-xl p-5 text-zinc-400 text-sm leading-relaxed max-h-60 overflow-y-auto custom-scrollbar">
-          {{ description || 'Retrieving classified data...' }}
-        </div>
-      </div>
+      <GameMediaGallery
+        :isLoadingMedia="isLoadingMedia"
+        :screenshots="screenshots"
+        :videos="videos"
+      />
     </div>
-
-    <!-- Toast -->
-    <Transition name="toast">
-      <div v-if="showNotification" class="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg font-mono text-xs uppercase tracking-wider font-bold shadow-2xl z-10"
-        :class="notificationType === 'success' ? 'bg-cyan-500 text-zinc-950' : 'bg-red-500 text-white'">
-        {{ notificationMessage }}
-      </div>
-    </Transition>
   </div>
 </template>
 
 <style scoped>
-.toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
-.toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, -10px); }
-.custom-scrollbar::-webkit-scrollbar { width: 4px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 2px; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 </style>

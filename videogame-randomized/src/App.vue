@@ -8,9 +8,11 @@ import apiService from '@/services/api'
 import FilterSection from './components/FilterSection.vue'
 import GameCard from './components/GameCard.vue'
 import GameHistory from './components/GameHistory.vue'
+import GlobalToast from './components/GlobalToast.vue'
+import GameStatePlaceholder from './components/GameStatePlaceholder.vue'
 
 // Async Modal (Optimization)
-const SaveGamesModal = defineAsyncComponent(() => 
+const SaveGamesModal = defineAsyncComponent(() =>
   import('./components/SaveGamesModal.vue')
 )
 
@@ -73,50 +75,44 @@ const closeVault = () => (showSavedGamesModal.value = false)
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 flex flex-col lg:flex-row gap-8">
       <!-- Sidebar with Filters -->
       <div class="w-full lg:w-1/3 lg:sticky lg:top-28 h-fit">
-        <FilterSection 
-          v-model="discovery.filters" 
-          :genres="genres" 
-          :platforms="platforms" 
+        <FilterSection
+          v-model="discovery.filters"
+          :genres="genres"
+          :platforms="platforms"
           :isLoading="discovery.isLoading.value"
-          @generate="discovery.generateGame" 
+          @generate="discovery.generateGame"
         />
       </div>
 
       <!-- Main Results Column -->
       <div class="w-full lg:w-2/3 space-y-8 flex flex-col">
         <div class="min-h-[400px] flex flex-col relative">
-          <GameCard 
-            v-if="discovery.currentGame.value" 
-            :game="discovery.currentGame.value" 
-            :description="discovery.gameDescription.value" 
-            class="animate-fade-in" 
+          <GameCard
+            v-if="discovery.currentGame.value"
+            :game="discovery.currentGame.value"
+            :description="discovery.gameDescription.value"
+            class="animate-fade-in"
           />
-            
+
           <!-- Loading State -->
-          <div v-else-if="discovery.isLoading.value" class="flex-1 flex flex-col items-center justify-center border border-dashed border-zinc-800 rounded-2xl bg-zinc-900/30 p-12">
-            <div class="w-16 h-16 border-4 border-zinc-800 border-t-cyan-500 rounded-full animate-spin mb-6"></div>
-            <p class="text-cyan-400 font-mono text-sm uppercase tracking-widest animate-pulse">Initializing Protocol...</p>
-          </div>
+          <GameStatePlaceholder
+            v-else-if="discovery.isLoading.value"
+            :isLoading="true"
+          />
 
           <!-- Empty State -->
-          <div v-else class="flex-1 flex flex-col items-center justify-center border border-dashed border-zinc-800 rounded-2xl bg-zinc-900/30 p-12 text-center">
-            <div class="w-20 h-20 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center mb-6 transform rotate-3">
-              <svg class="w-10 h-10 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-            </div>
-            <h3 class="text-lg font-black text-white mb-2 uppercase tracking-widest">Awaiting Input</h3>
-            <p class="text-zinc-500 text-sm max-w-sm">Configure parameters and engage sequence to discover your next adventure.</p>
-          </div>
+          <GameStatePlaceholder
+            v-else
+            :isLoading="false"
+          />
         </div>
 
         <!-- History -->
-        <GameHistory 
-          :gameHistory="discovery.gameHistory.value" 
-          @clear-history="discovery.clearHistory" 
+        <GameHistory
+          :gameHistory="discovery.gameHistory.value"
+          @clear-history="discovery.clearHistory"
         />
-        
+
         <!-- Error Reporting -->
         <div v-if="discovery.error.value" class="bg-red-500/10 border-l-2 border-red-500 text-red-400 p-4 rounded-r-xl text-sm font-mono animate-fade-in">
           <p class="font-bold uppercase tracking-wider mb-1">System Error</p>
@@ -125,21 +121,23 @@ const closeVault = () => (showSavedGamesModal.value = false)
       </div>
     </main>
 
-    <!-- Modal (Async) -->
-    <SaveGamesModal 
-      v-if="showSavedGamesModal" 
-      :show="showSavedGamesModal" 
-      @close="closeVault" 
+    <SaveGamesModal
+      v-if="showSavedGamesModal"
+      :show="showSavedGamesModal"
+      @close="closeVault"
     />
+
+    <!-- Notifications -->
+    <GlobalToast />
   </div>
 </template>
 
 <style>
 body { background-color: #09090b; }
 .animate-fade-in { animation: fadeIn 0.4s ease-out; }
-@keyframes fadeIn { 
-  from { opacity: 0; transform: translateY(10px); } 
-  to { opacity: 1; transform: translateY(0); } 
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: #09090b; }
