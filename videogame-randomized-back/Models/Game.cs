@@ -1,94 +1,99 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
+using Google.Cloud.Firestore;
 using System.Text.Json.Serialization;
 
 namespace videogame_randomized_back.Models;
 
+[FirestoreData]
 public class Game
 {
-    [BsonId]
+    // In Firestore, we usually use the document ID from the database for the unique identifier.
+    // However, since this ID comes from an external API (RAWG), we can keep it as a field.
+    [FirestoreProperty("id")]
     [JsonPropertyName("id")]
     public int Id { get; set; }
 
-    [BsonElement("name")]
+    [FirestoreProperty("name")]
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
 
-    [BsonElement("background_image")]
+    [FirestoreProperty("background_image")]
     [JsonPropertyName("background_image")]
     public string? BackgroundImage { get; set; }
 
-    [BsonElement("rating")]
+    [FirestoreProperty("rating")]
     [JsonPropertyName("rating")]
     public double Rating { get; set; }
 
-    [BsonElement("released")]
+    [FirestoreProperty("released")]
     [JsonPropertyName("released")]
     public string? Released { get; set; }
 
-    [BsonElement("genres")]
+    [FirestoreProperty("genres")]
     [JsonPropertyName("genres")]
     public List<Genre>? Genres { get; set; }
 
-    [BsonElement("platforms")]
+    [FirestoreProperty("platforms")]
     [JsonPropertyName("platforms")]
     public List<PlatformWrapper>? Platforms { get; set; }
 
-    [BsonElement("metacritic")]
+    [FirestoreProperty("metacritic")]
     [JsonPropertyName("metacritic")]
     public int? Metacritic { get; set; }
 
-    [BsonElement("description_raw")]
+    [FirestoreProperty("description_raw")]
     [JsonPropertyName("description_raw")]
     public string? DescriptionRaw { get; set; }
 
     // Additional fields for the "Vault"
-    [BsonElement("personalRating")]
+    [FirestoreProperty("personalRating")]
     [JsonPropertyName("personalRating")]
     public int? PersonalRating { get; set; }
 
-    [BsonElement("note")]
+    [FirestoreProperty("note")]
     [JsonPropertyName("note")]
     public string? Note { get; set; }
-    
-    [BsonElement("savedAt")]
+
+    [FirestoreProperty("savedAt")]
     [JsonPropertyName("savedAt")]
     public DateTime SavedAt { get; set; } = DateTime.UtcNow;
 }
 
+[FirestoreData]
 public class Genre
 {
-    [BsonElement("id")]
+    [FirestoreProperty("id")]
     [JsonPropertyName("id")]
     public int Id { get; set; }
 
-    [BsonElement("name")]
+    [FirestoreProperty("name")]
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
-    
-    [BsonElement("slug")]
+
+    [FirestoreProperty("slug")]
     [JsonPropertyName("slug")]
     public string? Slug { get; set; }
 }
 
+[FirestoreData]
 public class PlatformWrapper
 {
-    [BsonElement("platform")]
+    [FirestoreProperty("platform")]
     [JsonPropertyName("platform")]
     public Platform Platform { get; set; } = new();
 }
 
+[FirestoreData]
 public class Platform
 {
-    [BsonElement("id")]
+    [FirestoreProperty("id")]
     [JsonPropertyName("id")]
     public int Id { get; set; }
 
-    [BsonElement("name")]
+    [FirestoreProperty("name")]
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
-    
-    [BsonElement("slug")]
+
+    [FirestoreProperty("slug")]
     [JsonPropertyName("slug")]
     public string? Slug { get; set; }
 }

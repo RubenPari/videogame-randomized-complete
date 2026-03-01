@@ -1,63 +1,92 @@
-using Microsoft.Extensions.Options;
-using MongoDB.Bson; // Added missing using
-using MongoDB.Driver;
+using Microsoft.Extensions.Configuration;
+using Google.Cloud.Firestore;
 using videogame_randomized_back.Models;
 
 namespace videogame_randomized_back.Services;
 
 public class SavedGamesService
 {
-    private readonly IMongoCollection<Game> _gamesCollection;
+    private readonly FirestoreDb _db;
+    private const string CollectionName = "Games";
 
-    public SavedGamesService(IOptions<MongoDbSettings> mongoDbSettings)
+    public SavedGamesService(IConfiguration configuration)
     {
-        var settings = mongoDbSettings.Value;
-        // In case ConnectionString includes DB name, MongoUrl can parse it, but IOptions clarifies intent.
-        var mongoClient = new MongoClient(settings.ConnectionString);
-        var mongoDatabase = mongoClient.GetDatabase(settings.DatabaseName);
-
-        _gamesCollection = mongoDatabase.GetCollection<Game>("Games");
+        var projectId = configuration["GoogleCloud:ProjectId"];
+        if (string.IsNullOrEmpty(projectId))
+        {
+            throw new ArgumentNullException(nameof(projectId), "GoogleCloud:ProjectId not configured");
+        }
+        _db = FirestoreDb.Create(projectId);
     }
 
-    public async Task<List<Game>> GetAsync() =>
-        await _gamesCollection.Find(_ => true).ToListAsync();
+    public async Task<List<Game>> GetAsync()
+    {
+        Query query = _db.Collection(CollectionName);
+        QuerySnapshot querySnapshot = await query.GetSnapshotAsync();
+        return querySnapshot.Documents.Select(d => d.ConvertTo<Game>()).ToList();
+    }
 
-    public async Task<Game?> GetAsync(int id) =>
-        await _gamesCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
+    public async Task<Game?> GetAsync(int id)
+    {
+        DocumentReference docRef = _db.Collection(CollectionName).Document(id.ToString());
+        DocumentSnapshot snapshot = await docRef.GetSnapshotAsync();
+        if (snapshot.Exists)
+        {
+            return snapshot.ConvertTo<Game>();
+        }
+        return null;
+    }
 
     public async Task CreateAsync(Game newGame)
     {
-        // Use ReplaceOne with IsUpsert = true to handle potential duplicates or re-saves gracefully, 
-        // although the requirement says "Create". 
-        // If "Create" strictly means "fail if exists", use InsertOne.
-        // Frontend checks if saved first, but race conditions exist. 
-        // I'll stick to InsertOne as per standard POST behavior, letting it throw if ID exists.
-        // Actually, to be safe and robust, let's check first or catch the exception in controller.
-        // Let's use InsertOneAsync.
-        await _gamesCollection.InsertOneAsync(newGame);
+        DocumentReference docRef = _db.Collection(CollectionName).Document(newGame.Id.ToString());
+        await docRef.SetAsync(newGame);
     }
 
-    public async Task UpdateAsync(int id, Game updatedGame) =>
-        await _gamesCollection.ReplaceOneAsync(x => x.Id == id, updatedGame);
+    public async Task UpdateAsync(int id, Game updatedGame)
+    {
+        DocumentReference docRef = _db.Collection(CollectionName).Document(id.ToString());
+        await docRef.SetAsync(updatedGame, SetOptions.MergeAll);
+    }
 
-    public async Task RemoveAsync(int id) =>
-        await _gamesCollection.DeleteOneAsync(x => x.Id == id);
+    public async Task RemoveAsync(int id)
+    {
+        DocumentReference docRef = _db.Collection(CollectionName).Document(id.ToString());
+        await docRef.DeleteAsync();
+    }
 
-    public async Task RemoveAllAsync() =>
-        await _gamesCollection.DeleteManyAsync(_ => true);
+    public async Task RemoveAllAsync()
+    {
+        Query query = _db.Collection(CollectionName);
+        QuerySnapshot querySnapshot = await query.GetSnapshotAsync();
 
-    public async Task<bool> ExistsAsync(int id) =>
-        await _gamesCollection.Find(x => x.Id == id).AnyAsync();
+        // In production, deleting all documents in a collection should ideally be done in batches or through a Cloud Function.
+        foreach (DocumentSnapshot documentSnapshot in querySnapshot.Documents)
+        {
+            await documentSnapshot.Reference.DeleteAsync();
+        }
+    }
+
+    public async Task<bool> ExistsAsync(int id)
+    {
+        DocumentReference docRef = _db.Collection(CollectionName).Document(id.ToString());
+        DocumentSnapshot snapshot = await docRef.GetSnapshotAsync();
+        return snapshot.Exists;
+    }
 
     public async Task<List<Game>> SearchAsync(string query)
     {
-        var filter = Builders<Game>.Filter.Regex("Name", new BsonRegularExpression(query, "i"));
-        return await _gamesCollection.Find(filter).ToListAsync();
+        // Firestore non supporta query `LIKE` %query% o Regex in modo nativo per la ricerca full-text on string fields (in modo semplice e case-insensitive come Mongo).
+        // Un workaround temporaneo è fetchare tutto e filtrare in memoria. Poiché stiamo migrando per questo caso d'uso.
+        var allGames = await GetAsync();
+        if (string.IsNullOrWhiteSpace(query)) return allGames;
+
+        return allGames.Where(g => g.Name.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
     }
 
     public async Task<StatisticsDto> GetStatisticsAsync()
     {
-        var games = await _gamesCollection.Find(_ => true).ToListAsync();
+        var games = await GetAsync();
 
         if (games.Count == 0)
         {

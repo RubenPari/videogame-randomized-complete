@@ -6,14 +6,14 @@ using videogame_randomized_back.Mappers;
 using videogame_randomized_back.Services;
 using videogame_randomized_back.Validators;
 using videogame_randomized_back.Models;
+using Microsoft.Extensions.Configuration; // Added for IConfiguration if needed explicitly
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure MongoDbSettings
-builder.Services.Configure<MongoDbSettings>(
-    builder.Configuration.GetSection(MongoDbSettings.SectionName));
-
 // Add services to the container.
+// Ensure configuration is available to the service
+builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+
 builder.Services.AddSingleton<SavedGamesService>();
 builder.Services.AddSingleton<GameMapper>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateGameDto>();
