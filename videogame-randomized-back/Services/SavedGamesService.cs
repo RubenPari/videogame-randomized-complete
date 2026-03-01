@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using MongoDB.Bson; // Added missing using
 using MongoDB.Driver;
 using videogame_randomized_back.Models;
 
