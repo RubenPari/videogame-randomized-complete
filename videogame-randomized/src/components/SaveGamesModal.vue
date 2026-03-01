@@ -15,7 +15,7 @@ const searchQuery = ref('')
 const filteredGames = computed(() => {
   if (!searchQuery.value.trim()) return vault.savedGames
   const query = searchQuery.value.toLowerCase()
-  return vault.savedGames.filter(game => 
+  return vault.savedGames.filter(game =>
     game.name.toLowerCase().includes(query) ||
     game.genres?.some(genre => genre.name.toLowerCase().includes(query))
   )
@@ -60,9 +60,9 @@ const formatDate = (dateString) => {
     <Transition name="fade">
       <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" @click.self="emit('close')">
         <div class="absolute inset-0 bg-zinc-950/90 backdrop-blur-sm"></div>
-        
+
         <div class="relative w-full max-w-5xl max-h-[90vh] flex flex-col bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden" @click.stop>
-          
+
           <!-- Header -->
           <div class="flex items-center justify-between p-6 border-b border-zinc-800 bg-zinc-950">
             <div class="flex items-center gap-3">
@@ -85,7 +85,7 @@ const formatDate = (dateString) => {
             <!-- Search & Actions -->
             <div class="flex flex-col sm:flex-row gap-4 justify-between flex-shrink-0">
               <div class="relative w-full sm:w-96">
-                <input v-model="searchQuery" type="text" placeholder="QUERY DATABASE..." 
+                <input v-model="searchQuery" type="text" placeholder="QUERY DATABASE..."
                   class="w-full bg-zinc-950 border border-zinc-800 text-white font-mono text-sm px-4 py-3 pl-10 rounded-xl focus:outline-none focus:border-fuchsia-500 focus:ring-1 focus:ring-fuchsia-500 transition-colors">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
               </div>
@@ -104,13 +104,13 @@ const formatDate = (dateString) => {
             <div v-if="filteredGames.length === 0" class="flex-1 flex flex-col items-center justify-center py-12 text-center bg-zinc-950 border border-zinc-800 rounded-xl">
                <p class="text-zinc-600 font-mono text-sm uppercase tracking-widest">No matching records found in vault.</p>
             </div>
-            
+
             <!-- List -->
             <div v-else class="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-2">
               <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div v-for="game in filteredGames" :key="game.id" class="flex bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden group hover:border-zinc-700 transition-all h-32">
                   <div class="w-32 h-full flex-shrink-0 bg-zinc-900">
-                    <img :src="game.background_image || '/placeholder-game.jpg'" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity" />
+                    <img :src="game.backgroundImage || game.background_image || '/placeholder-game.jpg'" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity" />
                   </div>
                   <div class="p-4 flex-1 flex flex-col justify-between min-w-0">
                     <div>

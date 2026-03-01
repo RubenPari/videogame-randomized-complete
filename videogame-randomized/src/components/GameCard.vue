@@ -20,7 +20,7 @@ const isSaved = computed(() => vault.isGameSaved(props.game?.id))
 // Methods
 const toggleSaveGame = async () => {
   if (!props.game) return
-  
+
   try {
     const saved = await vault.toggleGame(props.game)
     showToast(
@@ -53,10 +53,10 @@ const formatDate = (dateString) => {
   <div v-if="game" class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl relative group flex flex-col">
     <!-- Image Section -->
     <div class="relative h-72 md:h-96 w-full flex-shrink-0">
-      <img :src="game.background_image || '/placeholder-game.jpg'" :alt="game.name"
+      <img :src="game.backgroundImage || game.background_image || '/placeholder-game.jpg'" :alt="game.name"
         class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
       <div class="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/40 to-transparent"></div>
-      
+
       <!-- Rating Badge -->
       <div class="absolute top-4 right-4 flex gap-2">
         <div class="bg-zinc-950/90 backdrop-blur border border-zinc-800 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
@@ -69,7 +69,7 @@ const formatDate = (dateString) => {
 
       <!-- Save Button -->
       <div class="absolute top-4 left-4">
-        <button @click="toggleSaveGame" 
+        <button @click="toggleSaveGame"
           class="p-2.5 rounded-lg backdrop-blur border transition-all"
           :class="isSaved ? 'bg-fuchsia-500/20 border-fuchsia-500 text-fuchsia-400 hover:bg-fuchsia-500/30' : 'bg-zinc-950/90 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-600'">
           <svg v-if="isSaved" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -80,11 +80,11 @@ const formatDate = (dateString) => {
           </svg>
         </button>
       </div>
-      
+
       <!-- Title & Release -->
       <div class="absolute bottom-0 left-0 w-full p-6 md:p-8">
         <div class="flex flex-wrap gap-2 mb-3">
-          <span v-for="genre in game.genres?.slice(0,3)" :key="genre.id" 
+          <span v-for="genre in game.genres?.slice(0,3)" :key="genre.id"
             class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 bg-zinc-800/80 backdrop-blur border border-zinc-700 text-zinc-300 rounded">
             {{ genre.name }}
           </span>
