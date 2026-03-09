@@ -39,4 +39,10 @@ public class Game
 
     [JsonPropertyName("savedAt")]
     public DateTime SavedAt { get; set; } = DateTime.UtcNow;
+
+    [JsonPropertyName("userId")]
+    public string UserId { get; set; } = string.Empty;
+
+    [JsonIgnore]
+    public AppUser? User { get; set; }
 }
