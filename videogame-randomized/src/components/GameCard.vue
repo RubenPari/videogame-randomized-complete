@@ -18,9 +18,11 @@ const screenshots = ref([])
 const videos = ref([])
 const youtubeVideoId = ref(null)
 const isLoadingMedia = ref(false)
+const showFullDescription = ref(false)
 
 // Computed
 const isSaved = computed(() => vault.isGameSaved(props.game?.id))
+const isDescriptionLong = computed(() => (props.description?.length || 0) > 300)
 
 // Methods
 const loadMediaData = async () => {
@@ -60,7 +62,10 @@ const loadMediaData = async () => {
 }
 
 watch(() => props.game?.id, (newId) => {
-  if (newId) loadMediaData()
+  if (newId) {
+    showFullDescription.value = false
+    loadMediaData()
+  }
 }, { immediate: true })
 
 const toggleSaveGame = async () => {
@@ -149,6 +154,41 @@ const formatDate = (dateString) => {
             {{ platform.platform.name }}
           </span>
         </div>
+      </div>
+
+      <!-- Game Description -->
+      <div v-if="description" class="relative">
+        <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Descrizione
+        </h3>
+        <div
+          class="relative bg-zinc-950/60 border border-zinc-800 rounded-xl p-5 overflow-hidden transition-all duration-300"
+          :class="{ 'max-h-48': !showFullDescription, 'max-h-[2000px]': showFullDescription }"
+        >
+          <p class="text-sm text-zinc-400 leading-relaxed whitespace-pre-line">{{ description }}</p>
+          <!-- Gradient fade overlay when collapsed -->
+          <div
+            v-if="!showFullDescription && isDescriptionLong"
+            class="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-zinc-950 to-transparent pointer-events-none"
+          ></div>
+        </div>
+        <button
+          v-if="isDescriptionLong"
+          @click="showFullDescription = !showFullDescription"
+          class="mt-2 text-xs font-bold text-cyan-400 hover:text-cyan-300 uppercase tracking-wider transition-colors flex items-center gap-1"
+        >
+          <svg
+            class="w-3.5 h-3.5 transition-transform duration-200"
+            :class="{ 'rotate-180': showFullDescription }"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+          {{ showFullDescription ? 'Mostra meno' : 'Leggi tutto' }}
+        </button>
       </div>
 
       <GameMediaGallery
