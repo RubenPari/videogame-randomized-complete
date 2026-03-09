@@ -13,23 +13,96 @@ public class SavedGamesService
         _db = db;
     }
 
-    public async Task<List<Game>> GetAsync()
+    // User-scoped queries
+
+    public async Task<List<Game>> GetByUserAsync(string userId)
     {
         return await _db.Games
             .AsNoTracking()
             .Include(g => g.Genres)
             .Include(g => g.Platforms)
+            .Where(g => g.UserId == userId)
             .ToListAsync();
     }
 
-    public async Task<Game?> GetAsync(int id)
+    public async Task<Game?> GetByUserAsync(string userId, int id)
     {
         return await _db.Games
             .AsNoTracking()
             .Include(g => g.Genres)
             .Include(g => g.Platforms)
-            .FirstOrDefaultAsync(g => g.Id == id);
+            .FirstOrDefaultAsync(g => g.Id == id && g.UserId == userId);
     }
+
+    public async Task<bool> ExistsByUserAsync(string userId, int id)
+    {
+        return await _db.Games.AnyAsync(g => g.Id == id && g.UserId == userId);
+    }
+
+    public async Task<List<Game>> SearchByUserAsync(string userId, string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return await GetByUserAsync(userId);
+
+        return await _db.Games
+            .AsNoTracking()
+            .Include(g => g.Genres)
+            .Include(g => g.Platforms)
+            .Where(g => g.UserId == userId && EF.Functions.Like(g.Name, $"%{query}%"))
+            .ToListAsync();
+    }
+
+    public async Task<StatisticsDto> GetStatisticsByUserAsync(string userId)
+    {
+        var games = await _db.Games
+            .AsNoTracking()
+            .Include(g => g.Genres)
+            .Include(g => g.Platforms)
+            .Where(g => g.UserId == userId)
+            .ToListAsync();
+
+        if (games.Count == 0)
+        {
+            return new StatisticsDto
+            {
+                TotalGames = 0,
+                AverageRating = 0,
+                GenreCount = new Dictionary<string, int>(),
+                PlatformCount = new Dictionary<string, int>()
+            };
+        }
+
+        return new StatisticsDto
+        {
+            TotalGames = games.Count,
+            AverageRating = games.Average(g => g.Rating),
+            GenreCount = games
+                .SelectMany(g => g.Genres)
+                .GroupBy(g => g.Name)
+                .ToDictionary(g => g.Key, g => g.Count()),
+            PlatformCount = games
+                .SelectMany(g => g.Platforms)
+                .GroupBy(p => p.Name)
+                .ToDictionary(p => p.Key, p => p.Count())
+        };
+    }
+
+    public async Task RemoveAllByUserAsync(string userId)
+    {
+        var gameIds = await _db.Games
+            .Where(g => g.UserId == userId)
+            .Select(g => g.Id)
+            .ToListAsync();
+
+        if (gameIds.Any())
+        {
+            await _db.GameGenres.Where(gg => gameIds.Contains(gg.GameId)).ExecuteDeleteAsync();
+            await _db.GamePlatforms.Where(gp => gameIds.Contains(gp.GameId)).ExecuteDeleteAsync();
+            await _db.Games.Where(g => g.UserId == userId).ExecuteDeleteAsync();
+        }
+    }
+
+    // Non-scoped write operations (game is already associated with user)
 
     public async Task CreateAsync(Game newGame)
     {
@@ -55,66 +128,9 @@ public class SavedGamesService
         }
     }
 
-    public async Task RemoveAllAsync()
-    {
-        await _db.GameGenres.ExecuteDeleteAsync();
-        await _db.GamePlatforms.ExecuteDeleteAsync();
-        await _db.Games.ExecuteDeleteAsync();
-        await _db.SaveChangesAsync();
-    }
-
     public async Task<bool> ExistsAsync(int id)
     {
         return await _db.Games.AnyAsync(g => g.Id == id);
-    }
-
-    public async Task<List<Game>> SearchAsync(string query)
-    {
-        if (string.IsNullOrWhiteSpace(query))
-            return await GetAsync();
-
-        return await _db.Games
-            .AsNoTracking()
-            .Include(g => g.Genres)
-            .Include(g => g.Platforms)
-            .Where(g => EF.Functions.Like(g.Name, $"%{query}%"))
-            .ToListAsync();
-    }
-
-    public async Task<StatisticsDto> GetStatisticsAsync()
-    {
-        var games = await _db.Games
-            .AsNoTracking()
-            .Include(g => g.Genres)
-            .Include(g => g.Platforms)
-            .ToListAsync();
-
-        if (games.Count == 0)
-        {
-            return new StatisticsDto
-            {
-                TotalGames = 0,
-                AverageRating = 0,
-                GenreCount = new Dictionary<string, int>(),
-                PlatformCount = new Dictionary<string, int>()
-            };
-        }
-
-        var stats = new StatisticsDto
-        {
-            TotalGames = games.Count,
-            AverageRating = games.Average(g => g.Rating),
-            GenreCount = games
-                .SelectMany(g => g.Genres)
-                .GroupBy(g => g.Name)
-                .ToDictionary(g => g.Key, g => g.Count()),
-            PlatformCount = games
-                .SelectMany(g => g.Platforms)
-                .GroupBy(p => p.Name)
-                .ToDictionary(p => p.Key, p => p.Count())
-        };
-
-        return stats;
     }
 
     private async Task SyncGenresAndPlatforms(Game game)
