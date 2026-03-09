@@ -1,9 +1,10 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using videogame_randomized_back.Models;
 
 namespace videogame_randomized_back.Data;
 
-public class AppDbContext : DbContext
+public class AppDbContext : IdentityDbContext<AppUser>
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -16,7 +17,7 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        
+
         modelBuilder.Entity<Game>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -25,7 +26,13 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Rating).HasPrecision(3, 2);
             entity.Property(e => e.DescriptionRaw).HasColumnType("TEXT");
             entity.Property(e => e.Note).HasColumnType("TEXT");
-            
+
+            // User relationship
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             entity.HasMany(e => e.Genres)
                 .WithMany(g => g.Games)
                 .UsingEntity<GameGenre>(
@@ -33,7 +40,7 @@ public class AppDbContext : DbContext
                     j => j.HasOne(jg => jg.Game).WithMany().HasForeignKey(jg => jg.GameId),
                     j => j.HasKey(t => new { t.GameId, t.GenreId })
                 );
-                
+
             entity.HasMany(e => e.Platforms)
                 .WithMany(p => p.Games)
                 .UsingEntity<GamePlatform>(
@@ -41,9 +48,10 @@ public class AppDbContext : DbContext
                     j => j.HasOne(jp => jp.Game).WithMany().HasForeignKey(jp => jp.GameId),
                     j => j.HasKey(t => new { t.GameId, t.PlatformId })
                 );
-                
+
             entity.HasIndex(e => e.Name);
             entity.HasIndex(e => e.SavedAt);
+            entity.HasIndex(e => e.UserId);
         });
 
         modelBuilder.Entity<Genre>(entity =>
