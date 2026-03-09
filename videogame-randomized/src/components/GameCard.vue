@@ -18,11 +18,9 @@ const screenshots = ref([])
 const videos = ref([])
 const youtubeVideoId = ref(null)
 const isLoadingMedia = ref(false)
-const showFullDescription = ref(false)
 
 // Computed
 const isSaved = computed(() => vault.isGameSaved(props.game?.id))
-const isDescriptionLong = computed(() => (props.description?.length || 0) > 300)
 
 // Methods
 const loadMediaData = async () => {
@@ -62,10 +60,7 @@ const loadMediaData = async () => {
 }
 
 watch(() => props.game?.id, (newId) => {
-  if (newId) {
-    showFullDescription.value = false
-    loadMediaData()
-  }
+  if (newId) loadMediaData()
 }, { immediate: true })
 
 const toggleSaveGame = async () => {
@@ -157,38 +152,12 @@ const formatDate = (dateString) => {
       </div>
 
       <!-- Game Description -->
-      <div v-if="description" class="relative">
-        <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          Descrizione
-        </h3>
-        <div
-          class="relative bg-zinc-950/60 border border-zinc-800 rounded-xl p-5 overflow-hidden transition-all duration-300"
-          :class="{ 'max-h-48': !showFullDescription, 'max-h-[2000px]': showFullDescription }"
-        >
-          <div class="description-content text-sm text-zinc-400 leading-relaxed" v-html="description"></div>
-          <!-- Gradient fade overlay when collapsed -->
-          <div
-            v-if="!showFullDescription && isDescriptionLong"
-            class="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-zinc-950 to-transparent pointer-events-none"
-          ></div>
+      <div v-if="description" class="description-card">
+        <div class="flex items-center gap-2.5 mb-4">
+          <div class="w-1 h-5 bg-gradient-to-b from-cyan-400 to-fuchsia-500 rounded-full"></div>
+          <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-[0.2em]">Descrizione</h3>
         </div>
-        <button
-          v-if="isDescriptionLong"
-          @click="showFullDescription = !showFullDescription"
-          class="mt-2 text-xs font-bold text-cyan-400 hover:text-cyan-300 uppercase tracking-wider transition-colors flex items-center gap-1"
-        >
-          <svg
-            class="w-3.5 h-3.5 transition-transform duration-200"
-            :class="{ 'rotate-180': showFullDescription }"
-            fill="none" stroke="currentColor" viewBox="0 0 24 24"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-          {{ showFullDescription ? 'Mostra meno' : 'Leggi tutto' }}
-        </button>
+        <div class="description-content" v-html="description"></div>
       </div>
 
       <GameMediaGallery
@@ -202,32 +171,59 @@ const formatDate = (dateString) => {
 </template>
 
 <style scoped>
+.description-card {
+  background: linear-gradient(135deg, rgba(24, 24, 27, 0.8), rgba(9, 9, 11, 0.6));
+  border: 1px solid #27272a;
+  border-radius: 1rem;
+  padding: 1.5rem 1.75rem;
+  position: relative;
+  overflow: hidden;
+}
+.description-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(to bottom, #22d3ee, #d946ef);
+  border-radius: 3px;
+}
+.description-content {
+  font-size: 0.9375rem;
+  line-height: 1.8;
+  color: #a1a1aa;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: 0.01em;
+}
 .description-content :deep(p) {
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 .description-content :deep(p:last-child) {
   margin-bottom: 0;
 }
 .description-content :deep(strong),
 .description-content :deep(b) {
-  color: #e4e4e7; /* zinc-200 */
+  color: #f4f4f5;
   font-weight: 600;
 }
 .description-content :deep(a) {
-  color: #22d3ee; /* cyan-400 */
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  color: #22d3ee;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(34, 211, 238, 0.3);
+  transition: all 0.2s;
 }
 .description-content :deep(a:hover) {
-  color: #67e8f9; /* cyan-300 */
+  color: #67e8f9;
+  border-bottom-color: #67e8f9;
 }
 .description-content :deep(ul),
 .description-content :deep(ol) {
-  padding-left: 1.25rem;
-  margin-bottom: 0.75rem;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
 }
 .description-content :deep(li) {
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.4rem;
 }
 .description-content :deep(br) {
   content: '';
@@ -238,10 +234,10 @@ const formatDate = (dateString) => {
 .description-content :deep(h4) {
   color: #ffffff;
   font-weight: 700;
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
+  margin-top: 1.25rem;
+  margin-bottom: 0.625rem;
+  font-size: 0.9375rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 </style>
