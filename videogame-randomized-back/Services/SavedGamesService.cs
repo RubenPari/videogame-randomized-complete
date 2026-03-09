@@ -135,31 +135,41 @@ public class SavedGamesService
 
     private async Task SyncGenresAndPlatforms(Game game)
     {
+        var syncedGenres = new List<Genre>();
         foreach (var genre in game.Genres)
         {
-            var existing = await _db.Genres.FindAsync(genre.Id);
-            if (existing != null)
+            var tracked = _db.ChangeTracker.Entries<Genre>()
+                .FirstOrDefault(e => e.Entity.Id == genre.Id)?.Entity;
+
+            if (tracked != null)
             {
-                _db.Entry(genre).State = EntityState.Unchanged;
+                syncedGenres.Add(tracked);
             }
             else
             {
-                _db.Genres.Add(genre);
+                var existing = await _db.Genres.FindAsync(genre.Id);
+                syncedGenres.Add(existing ?? genre);
             }
         }
+        game.Genres = syncedGenres;
 
+        var syncedPlatforms = new List<Platform>();
         foreach (var platform in game.Platforms)
         {
-            var existing = await _db.Platforms.FindAsync(platform.Id);
-            if (existing != null)
+            var tracked = _db.ChangeTracker.Entries<Platform>()
+                .FirstOrDefault(e => e.Entity.Id == platform.Id)?.Entity;
+
+            if (tracked != null)
             {
-                _db.Entry(platform).State = EntityState.Unchanged;
+                syncedPlatforms.Add(tracked);
             }
             else
             {
-                _db.Platforms.Add(platform);
+                var existing = await _db.Platforms.FindAsync(platform.Id);
+                syncedPlatforms.Add(existing ?? platform);
             }
         }
+        game.Platforms = syncedPlatforms;
     }
 }
 
