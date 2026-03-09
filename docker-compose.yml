@@ -1,4 +1,20 @@
 services:
+  mysql:
+    image: mysql:8.0
+    container_name: videogames_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: videogames
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./videogame-randomized-back
@@ -8,9 +24,10 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      # GCP Project ID will be loaded from appsettings or GOOGLE_APPLICATION_CREDENTIALS for local run.
-      # Se si vuole forzare qui:
-      # - GoogleCloud__ProjectId=videogame-randomized-rilm8
+      - ConnectionStrings__DefaultConnection=Server=mysql;Database=videogames;Uid=root;Pwd=password;
+    depends_on:
+      mysql:
+        condition: service_healthy
 
   frontend:
     build:
@@ -26,3 +43,6 @@ services:
       - VITE_API_BASE_URL=http://localhost:8080/api
     depends_on:
       - backend
+
+volumes:
+  mysql_data:
