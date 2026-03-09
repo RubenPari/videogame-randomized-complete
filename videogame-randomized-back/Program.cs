@@ -1,21 +1,29 @@
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
-using videogame_randomized_back.DTOs; // Added missing using
+using videogame_randomized_back.Data;
+using videogame_randomized_back.DTOs;
 using videogame_randomized_back.Endpoints;
 using videogame_randomized_back.Mappers;
 using videogame_randomized_back.Services;
 using videogame_randomized_back.Validators;
-using videogame_randomized_back.Models;
-using Microsoft.Extensions.Configuration; // Added for IConfiguration if needed explicitly
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Ensure configuration is available to the service
-builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+// Add DbContext with MySQL
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? "Server=localhost;Database=videogames;Uid=root;Pwd=password;";
 
-builder.Services.AddSingleton<SavedGamesService>();
-builder.Services.AddSingleton<GameMapper>();
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseMySql(
+        connectionString,
+        ServerVersion.AutoDetect(connectionString),
+        b => b.MigrationsAssembly("videogame-randomized-back")
+    ));
+
+// Add services to the container
+builder.Services.AddScoped<SavedGamesService>();
+builder.Services.AddScoped<GameMapper>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateGameDto>();
 
 // Configure JSON options for Minimal APIs
