@@ -17,7 +17,6 @@ const httpClient = axios.create({
 // Request Interceptor: Attach Authorization Token
 httpClient.interceptors.request.use(
   (config) => {
-    // Placeholder for retrieving token from store or localStorage
     const token = localStorage.getItem('authToken')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
@@ -38,10 +37,20 @@ httpClient.interceptors.response.use(
     const toastStore = useToastStore()
 
     if (error.response) {
-      // Handle 401 Unauthorized
+      // Handle 401 Unauthorized - redirect to login
       if (error.response.status === 401) {
         console.warn('Unauthorized access. Redirecting to login...')
-        toastStore.showToast('Auth expired or invalid. Please reconnect.', 'error')
+        toastStore.showToast('Session expired. Please sign in again.', 'error')
+
+        // Clear auth state
+        localStorage.removeItem('authToken')
+        localStorage.removeItem('authEmail')
+
+        // Redirect to login (use dynamic import to avoid circular deps)
+        const { default: router } = await import('@/router')
+        if (router.currentRoute.value.name !== 'Login') {
+          router.push('/login')
+        }
       }
 
       // Handle 403 Forbidden
