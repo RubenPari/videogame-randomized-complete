@@ -168,7 +168,7 @@ const formatDate = (dateString) => {
           class="relative bg-zinc-950/60 border border-zinc-800 rounded-xl p-5 overflow-hidden transition-all duration-300"
           :class="{ 'max-h-48': !showFullDescription, 'max-h-[2000px]': showFullDescription }"
         >
-          <p class="text-sm text-zinc-400 leading-relaxed whitespace-pre-line">{{ description }}</p>
+          <div class="description-content text-sm text-zinc-400 leading-relaxed" v-html="description"></div>
           <!-- Gradient fade overlay when collapsed -->
           <div
             v-if="!showFullDescription && isDescriptionLong"
@@ -202,4 +202,46 @@ const formatDate = (dateString) => {
 </template>
 
 <style scoped>
+.description-content :deep(p) {
+  margin-bottom: 0.75rem;
+}
+.description-content :deep(p:last-child) {
+  margin-bottom: 0;
+}
+.description-content :deep(strong),
+.description-content :deep(b) {
+  color: #e4e4e7; /* zinc-200 */
+  font-weight: 600;
+}
+.description-content :deep(a) {
+  color: #22d3ee; /* cyan-400 */
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.description-content :deep(a:hover) {
+  color: #67e8f9; /* cyan-300 */
+}
+.description-content :deep(ul),
+.description-content :deep(ol) {
+  padding-left: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.description-content :deep(li) {
+  margin-bottom: 0.25rem;
+}
+.description-content :deep(br) {
+  content: '';
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.description-content :deep(h3),
+.description-content :deep(h4) {
+  color: #ffffff;
+  font-weight: 700;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
 </style>

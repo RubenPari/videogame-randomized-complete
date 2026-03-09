@@ -37,21 +37,21 @@ export function useGameDiscovery() {
       const params = {
         ordering: filters.ordering,
         page_size: 40,
-        metacritic: filters.minRating > 0 
-          ? `${Math.floor(filters.minRating * 20)},100` 
+        metacritic: filters.minRating > 0
+          ? `${Math.floor(filters.minRating * 20)},100`
           : undefined
       }
 
       if (filters.genre) params.genres = filters.genre
       if (filters.platforms?.length > 0) params.platforms = filters.platforms.join(',')
-      
+
       const startDate = filters.startYear ? `${filters.startYear}-01-01` : '1980-01-01'
       const endDate = filters.endYear ? `${filters.endYear}-12-31` : `${new Date().getFullYear()}-12-31`
       params.dates = `${startDate},${endDate}`
 
       // Fetch games
       const response = await apiService.getGames(params)
-      
+
       if (!response.data.results || response.data.results.length === 0) {
         error.value = 'No games found. Adjust your parameters.'
         return
@@ -61,7 +61,7 @@ export function useGameDiscovery() {
 
       // Filter out already seen games
       const filtered = response.data.results.filter(
-        game => game.rating >= filters.minRating && 
+        game => game.rating >= filters.minRating &&
                 !gameHistory.value.some(h => h.id === game.id)
       )
 
@@ -72,13 +72,13 @@ export function useGameDiscovery() {
 
       // Random selection
       const selected = filtered[Math.floor(Math.random() * filtered.length)]
-      
+
       // Update history
       gameHistory.value.push({ id: selected.id, name: selected.name })
-      
+
       // Fetch details & translate
       await fetchGameDetails(selected.id)
-      
+
       // Set as current
       currentGame.value = selected
     } catch (err) {
@@ -91,14 +91,14 @@ export function useGameDiscovery() {
 
   /**
    * Fetches detailed information and handles translation
-   * @param {number} gameId 
+   * @param {number} gameId
    */
   const fetchGameDetails = async (gameId) => {
     try {
       gameDescription.value = 'Decrypting database entry...'
       const response = await apiService.getGameDetails(gameId)
-      const englishDescription = response.data.description_raw
-      
+      const englishDescription = response.data.description
+
       gameDescription.value = await apiService.translateGameDescription(englishDescription)
     } catch (err) {
       console.error('Translation failure:', err)
