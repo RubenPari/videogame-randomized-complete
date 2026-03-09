@@ -1,92 +1,93 @@
-using Microsoft.Extensions.Configuration;
-using Google.Cloud.Firestore;
+using Microsoft.EntityFrameworkCore;
+using videogame_randomized_back.Data;
 using videogame_randomized_back.Models;
 
 namespace videogame_randomized_back.Services;
 
 public class SavedGamesService
 {
-    private readonly FirestoreDb _db;
-    private const string CollectionName = "Games";
+    private readonly AppDbContext _db;
 
-    public SavedGamesService(IConfiguration configuration)
+    public SavedGamesService(AppDbContext db)
     {
-        var projectId = configuration["GoogleCloud:ProjectId"];
-        if (string.IsNullOrEmpty(projectId))
-        {
-            throw new ArgumentNullException(nameof(projectId), "GoogleCloud:ProjectId not configured");
-        }
-        _db = FirestoreDb.Create(projectId);
+        _db = db;
     }
 
     public async Task<List<Game>> GetAsync()
     {
-        Query query = _db.Collection(CollectionName);
-        QuerySnapshot querySnapshot = await query.GetSnapshotAsync();
-        return querySnapshot.Documents.Select(d => d.ConvertTo<Game>()).ToList();
+        return await _db.Games
+            .AsNoTracking()
+            .Include(g => g.Genres)
+            .Include(g => g.Platforms)
+            .ToListAsync();
     }
 
     public async Task<Game?> GetAsync(int id)
     {
-        DocumentReference docRef = _db.Collection(CollectionName).Document(id.ToString());
-        DocumentSnapshot snapshot = await docRef.GetSnapshotAsync();
-        if (snapshot.Exists)
-        {
-            return snapshot.ConvertTo<Game>();
-        }
-        return null;
+        return await _db.Games
+            .AsNoTracking()
+            .Include(g => g.Genres)
+            .Include(g => g.Platforms)
+            .FirstOrDefaultAsync(g => g.Id == id);
     }
 
     public async Task CreateAsync(Game newGame)
     {
-        DocumentReference docRef = _db.Collection(CollectionName).Document(newGame.Id.ToString());
-        await docRef.SetAsync(newGame);
+        await SyncGenresAndPlatforms(newGame);
+        _db.Games.Add(newGame);
+        await _db.SaveChangesAsync();
     }
 
     public async Task UpdateAsync(int id, Game updatedGame)
     {
-        DocumentReference docRef = _db.Collection(CollectionName).Document(id.ToString());
-        await docRef.SetAsync(updatedGame, SetOptions.MergeAll);
+        await SyncGenresAndPlatforms(updatedGame);
+        _db.Games.Update(updatedGame);
+        await _db.SaveChangesAsync();
     }
 
     public async Task RemoveAsync(int id)
     {
-        DocumentReference docRef = _db.Collection(CollectionName).Document(id.ToString());
-        await docRef.DeleteAsync();
+        var game = await _db.Games.FindAsync(id);
+        if (game != null)
+        {
+            _db.Games.Remove(game);
+            await _db.SaveChangesAsync();
+        }
     }
 
     public async Task RemoveAllAsync()
     {
-        Query query = _db.Collection(CollectionName);
-        QuerySnapshot querySnapshot = await query.GetSnapshotAsync();
-
-        // In production, deleting all documents in a collection should ideally be done in batches or through a Cloud Function.
-        foreach (DocumentSnapshot documentSnapshot in querySnapshot.Documents)
-        {
-            await documentSnapshot.Reference.DeleteAsync();
-        }
+        await _db.GameGenres.ExecuteDeleteAsync();
+        await _db.GamePlatforms.ExecuteDeleteAsync();
+        await _db.Games.ExecuteDeleteAsync();
+        await _db.SaveChangesAsync();
     }
 
     public async Task<bool> ExistsAsync(int id)
     {
-        DocumentReference docRef = _db.Collection(CollectionName).Document(id.ToString());
-        DocumentSnapshot snapshot = await docRef.GetSnapshotAsync();
-        return snapshot.Exists;
+        return await _db.Games.AnyAsync(g => g.Id == id);
     }
 
     public async Task<List<Game>> SearchAsync(string query)
     {
-        // Firestore non supporta query `LIKE` %query% o Regex in modo nativo per la ricerca full-text on string fields (in modo semplice e case-insensitive come Mongo).
-        // Un workaround temporaneo è fetchare tutto e filtrare in memoria. Poiché stiamo migrando per questo caso d'uso.
-        var allGames = await GetAsync();
-        if (string.IsNullOrWhiteSpace(query)) return allGames;
+        if (string.IsNullOrWhiteSpace(query))
+            return await GetAsync();
 
-        return allGames.Where(g => g.Name.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+        return await _db.Games
+            .AsNoTracking()
+            .Include(g => g.Genres)
+            .Include(g => g.Platforms)
+            .Where(g => EF.Functions.Like(g.Name, $"%{query}%"))
+            .ToListAsync();
     }
 
     public async Task<StatisticsDto> GetStatisticsAsync()
     {
-        var games = await GetAsync();
+        var games = await _db.Games
+            .AsNoTracking()
+            .Include(g => g.Genres)
+            .Include(g => g.Platforms)
+            .ToListAsync();
 
         if (games.Count == 0)
         {
@@ -103,35 +104,46 @@ public class SavedGamesService
         {
             TotalGames = games.Count,
             AverageRating = games.Average(g => g.Rating),
-            GenreCount = new Dictionary<string, int>(),
-            PlatformCount = new Dictionary<string, int>()
+            GenreCount = games
+                .SelectMany(g => g.Genres)
+                .GroupBy(g => g.Name)
+                .ToDictionary(g => g.Key, g => g.Count()),
+            PlatformCount = games
+                .SelectMany(g => g.Platforms)
+                .GroupBy(p => p.Name)
+                .ToDictionary(p => p.Key, p => p.Count())
         };
 
-        foreach (var game in games)
-        {
-            if (game.Genres != null)
-            {
-                foreach (var genre in game.Genres)
-                {
-                    if (!stats.GenreCount.ContainsKey(genre.Name))
-                        stats.GenreCount[genre.Name] = 0;
-                    stats.GenreCount[genre.Name]++;
-                }
-            }
+        return stats;
+    }
 
-            if (game.Platforms != null)
+    private async Task SyncGenresAndPlatforms(Game game)
+    {
+        foreach (var genre in game.Genres)
+        {
+            var existing = await _db.Genres.FindAsync(genre.Id);
+            if (existing != null)
             {
-                foreach (var pWrapper in game.Platforms)
-                {
-                    var pName = pWrapper.Platform.Name;
-                    if (!stats.PlatformCount.ContainsKey(pName))
-                        stats.PlatformCount[pName] = 0;
-                    stats.PlatformCount[pName]++;
-                }
+                _db.Entry(genre).State = EntityState.Unchanged;
+            }
+            else
+            {
+                _db.Genres.Add(genre);
             }
         }
 
-        return stats;
+        foreach (var platform in game.Platforms)
+        {
+            var existing = await _db.Platforms.FindAsync(platform.Id);
+            if (existing != null)
+            {
+                _db.Entry(platform).State = EntityState.Unchanged;
+            }
+            else
+            {
+                _db.Platforms.Add(platform);
+            }
+        }
     }
 }
 
