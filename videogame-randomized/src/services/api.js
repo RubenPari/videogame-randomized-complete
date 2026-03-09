@@ -14,17 +14,17 @@ import axios from 'axios'
 import translationService from './translation'
 
 // Constants for RAWG API configuration
-const API_KEY = import.meta.env.VITE_RAWG_API_KEY || 'YOUR_RAWG_API_KEY'  // API key from environment variable
-const BASE_URL = 'https://api.rawg.io/api'                               // Base URL for RAWG API
+const API_KEY = import.meta.env.VITE_RAWG_API_KEY || 'YOUR_RAWG_API_KEY' // API key from environment variable
+const BASE_URL = 'https://api.rawg.io/api' // Base URL for RAWG API
 
 /**
  * Configured Axios instance for RAWG API
  * Automatically includes API key in all requests
  */
 const apiClient = axios.create({
-  baseURL: BASE_URL,     // Base URL for all requests
+  baseURL: BASE_URL, // Base URL for all requests
   params: {
-    key: API_KEY,        // API key automatically added to every request
+    key: API_KEY, // API key automatically added to every request
   },
 })
 
@@ -72,7 +72,7 @@ export default {
   getGames(params = {}) {
     return apiClient.get('/games', {
       params: {
-        ...params,  // Spread the received parameters
+        ...params, // Spread the received parameters
       },
     })
   },
@@ -106,6 +106,37 @@ export default {
    */
   getGameMovies(gameId) {
     return apiClient.get(`/games/${gameId}/movies`)
+  },
+
+  /**
+   * Searches YouTube for a game trailer
+   * @param {string} gameName - Name of the game
+   * @returns {Promise<string|null>} YouTube video ID or null
+   */
+  async searchYouTubeTrailer(gameName) {
+    const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
+    if (!YOUTUBE_API_KEY || !gameName) return null
+
+    try {
+      const response = await axios.get('https://www.googleapis.com/youtube/v3/search', {
+        params: {
+          part: 'snippet',
+          q: `${gameName} official trailer`,
+          type: 'video',
+          maxResults: 1,
+          videoCategoryId: '20', // Gaming category
+          key: YOUTUBE_API_KEY,
+        },
+      })
+      const items = response.data?.items
+      if (items && items.length > 0) {
+        return items[0].id.videoId
+      }
+      return null
+    } catch (error) {
+      console.error('YouTube trailer search failed:', error)
+      return null
+    }
   },
 
   /**

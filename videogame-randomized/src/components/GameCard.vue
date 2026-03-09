@@ -16,6 +16,7 @@ const toastSession = useToastStore()
 // Local UI State
 const screenshots = ref([])
 const videos = ref([])
+const youtubeVideoId = ref(null)
 const isLoadingMedia = ref(false)
 
 // Computed
@@ -28,6 +29,7 @@ const loadMediaData = async () => {
   isLoadingMedia.value = true
   screenshots.value = []
   videos.value = []
+  youtubeVideoId.value = null
 
   try {
     const [screenshotsRes, moviesRes] = await Promise.allSettled([
@@ -41,6 +43,14 @@ const loadMediaData = async () => {
 
     if (moviesRes.status === 'fulfilled') {
       videos.value = moviesRes.value.data?.results || []
+    }
+
+    // Fallback: search YouTube if no RAWG videos
+    if (videos.value.length === 0 && props.game.name) {
+      const videoId = await api.searchYouTubeTrailer(props.game.name)
+      if (videoId) {
+        youtubeVideoId.value = videoId
+      }
     }
   } catch (error) {
     console.error('Failed to load media for game:', error)
@@ -145,6 +155,7 @@ const formatDate = (dateString) => {
         :isLoadingMedia="isLoadingMedia"
         :screenshots="screenshots"
         :videos="videos"
+        :youtubeVideoId="youtubeVideoId"
       />
     </div>
   </div>

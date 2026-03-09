@@ -4,6 +4,7 @@ import { ref } from 'vue'
 defineProps({
   screenshots: { type: Array, default: () => [] },
   videos: { type: Array, default: () => [] },
+  youtubeVideoId: { type: String, default: null },
   isLoadingMedia: { type: Boolean, default: false }
 })
 
@@ -16,7 +17,7 @@ const activeScreenshotIndex = ref(0)
   </div>
 
   <div v-else class="flex-1 flex flex-col gap-8">
-    <!-- Trailers -->
+    <!-- RAWG Trailers -->
     <div v-if="videos.length > 0" class="flex flex-col gap-3">
       <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center justify-between">
         <span>Video Trailer</span>
@@ -33,6 +34,26 @@ const activeScreenshotIndex = ref(0)
         </video>
       </div>
       <p class="text-xs text-zinc-500 font-mono">{{ videos[0]?.name }}</p>
+    </div>
+
+    <!-- YouTube Trailer Fallback -->
+    <div v-else-if="youtubeVideoId" class="flex flex-col gap-3">
+      <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+        <svg class="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z"/>
+          <path d="M9.545 15.568V8.432L15.818 12l-6.273 3.568z" fill="white"/>
+        </svg>
+        <span>YouTube Trailer</span>
+      </h3>
+      <div class="bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden aspect-video relative flex-shrink-0">
+        <iframe
+          :src="`https://www.youtube.com/embed/${youtubeVideoId}?rel=0`"
+          class="absolute inset-0 w-full h-full"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
     </div>
 
     <!-- Screenshots -->
