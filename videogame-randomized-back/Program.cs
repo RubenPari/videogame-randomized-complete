@@ -122,6 +122,7 @@ app.UseAuthorization();
 
 app.MapAuthEndpoints();
 app.MapSavedGamesEndpoints();
+app.MapDiscoveryLogEndpoints();
 app.MapGet("/", () => "Hello World!");
 
 app.Run();
