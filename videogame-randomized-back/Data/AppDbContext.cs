@@ -13,6 +13,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<Platform> Platforms => Set<Platform>();
     public DbSet<GameGenre> GameGenres => Set<GameGenre>();
     public DbSet<GamePlatform> GamePlatforms => Set<GamePlatform>();
+    public DbSet<DiscoveryLogEntry> DiscoveryLog => Set<DiscoveryLogEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -68,6 +69,18 @@ public class AppDbContext : IdentityDbContext<AppUser>
             entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Slug).HasMaxLength(100);
             entity.HasIndex(e => e.Name);
+        });
+
+        modelBuilder.Entity<DiscoveryLogEntry>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.GameName).IsRequired().HasMaxLength(255);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => new { e.UserId, e.GameExternalId }).IsUnique();
         });
     }
 }
