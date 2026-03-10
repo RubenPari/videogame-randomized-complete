@@ -1,10 +1,12 @@
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import apiService from '@/services/api'
+import httpClient from '@/services/httpClient'
 
 /**
  * useGameDiscovery
  * Composable for managing game discovery logic, including filters,
  * generation, history, and description fetching/translation.
+ * Integrates with persistent discovery log for cross-session exclusion.
  */
 export function useGameDiscovery() {
   // Reactive state
@@ -12,8 +14,17 @@ export function useGameDiscovery() {
   const gameDescription = ref('')
   const isLoading = ref(false)
   const error = ref(null)
-  const gameHistory = ref([])
+  const gameHistory = ref([])       // Current session history
+  const pastHistory = ref([])        // Loaded from server (previous sessions)
   const totalGamesCount = ref(0)
+  const isSavingLog = ref(false)
+
+  // All excluded IDs = current session + past sessions
+  const allExcludedIds = computed(() => {
+    const currentIds = gameHistory.value.map(g => g.id)
+    const pastIds = pastHistory.value.map(g => g.id)
+    return new Set([...currentIds, ...pastIds])
+  })
 
   // Centralized filters using reactive object
   const filters = reactive({
@@ -24,6 +35,57 @@ export function useGameDiscovery() {
     endYear: new Date().getFullYear(),
     ordering: '-rating'
   })
+
+  /**
+   * Load discovery log from the server (previous sessions)
+   */
+  const loadPastHistory = async () => {
+    try {
+      const response = await httpClient.get('/discovery-log')
+      pastHistory.value = response.data || []
+    } catch (err) {
+      console.error('Failed to load discovery log:', err)
+      pastHistory.value = []
+    }
+  }
+
+  /**
+   * Save current session's discovered games to the server
+   */
+  const saveSessionLog = async () => {
+    if (gameHistory.value.length === 0) return { saved: 0 }
+
+    isSavingLog.value = true
+    try {
+      const response = await httpClient.post('/discovery-log', gameHistory.value)
+      // Merge saved entries into pastHistory
+      const savedEntries = gameHistory.value.filter(
+        g => !pastHistory.value.some(p => p.id === g.id)
+      )
+      pastHistory.value = [...pastHistory.value, ...savedEntries]
+      // Clear current session since they're now persisted
+      gameHistory.value = []
+      return response.data
+    } catch (err) {
+      console.error('Failed to save session log:', err)
+      throw err
+    } finally {
+      isSavingLog.value = false
+    }
+  }
+
+  /**
+   * Clear all discovery log entries from the server
+   */
+  const clearPastHistory = async () => {
+    try {
+      await httpClient.delete('/discovery-log')
+      pastHistory.value = []
+    } catch (err) {
+      console.error('Failed to clear discovery log:', err)
+      throw err
+    }
+  }
 
   /**
    * Generates a new random game based on current filters
@@ -59,10 +121,10 @@ export function useGameDiscovery() {
 
       totalGamesCount.value = response.data.count
 
-      // Filter out already seen games
+      // Filter out already seen games (current session + past sessions)
       const filtered = response.data.results.filter(
         game => game.rating >= filters.minRating &&
-                !gameHistory.value.some(h => h.id === game.id)
+                !allExcludedIds.value.has(game.id)
       )
 
       if (filtered.length === 0) {
@@ -107,7 +169,7 @@ export function useGameDiscovery() {
   }
 
   /**
-   * Resets session history
+   * Resets current session history
    */
   const clearHistory = () => {
     gameHistory.value = []
@@ -119,9 +181,14 @@ export function useGameDiscovery() {
     isLoading,
     error,
     gameHistory,
+    pastHistory,
     totalGamesCount,
     filters,
+    isSavingLog,
     generateGame,
-    clearHistory
+    clearHistory,
+    loadPastHistory,
+    saveSessionLog,
+    clearPastHistory
   }
 }

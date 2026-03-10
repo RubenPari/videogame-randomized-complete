@@ -48,7 +48,10 @@ onMounted(async () => {
     ])
     genres.value = genresRes.data.results
     platforms.value = platformsRes.data.results
-    await vault.loadVault()
+    await Promise.all([
+      vault.loadVault(),
+      discovery.loadPastHistory()
+    ])
   } catch (err) {
     console.error('Initialization error:', err)
   }
@@ -84,6 +87,24 @@ const handleChangePassword = async () => {
     changePwdError.value = err.response?.data?.error || 'Failed to change password'
   } finally {
     changePwdLoading.value = false
+  }
+}
+
+const handleSaveSession = async () => {
+  try {
+    const result = await discovery.saveSessionLog()
+    toastStore.showToast(`Session saved! ${result.saved} new games logged.`, 'success')
+  } catch {
+    toastStore.showToast('Failed to save session log', 'error')
+  }
+}
+
+const handleClearPastHistory = async () => {
+  try {
+    await discovery.clearPastHistory()
+    toastStore.showToast('Discovery log cleared', 'success')
+  } catch {
+    toastStore.showToast('Failed to clear discovery log', 'error')
   }
 }
 </script>
@@ -195,7 +216,11 @@ const handleChangePassword = async () => {
         <!-- History -->
         <GameHistory
           :gameHistory="discovery.gameHistory.value"
+          :pastHistory="discovery.pastHistory.value"
+          :isSavingLog="discovery.isSavingLog.value"
           @clear-history="discovery.clearHistory"
+          @save-session="handleSaveSession"
+          @clear-past-history="handleClearPastHistory"
         />
 
         <!-- Error Reporting -->
