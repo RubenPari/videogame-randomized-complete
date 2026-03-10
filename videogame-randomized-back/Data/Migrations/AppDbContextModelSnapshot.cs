@@ -221,6 +221,39 @@ namespace videogame_randomized_back.Data.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("videogame_randomized_back.Models.DiscoveryLogEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("DiscoveredAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("GameExternalId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("GameName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "GameExternalId")
+                        .IsUnique();
+
+                    b.ToTable("DiscoveryLog");
+                });
+
             modelBuilder.Entity("videogame_randomized_back.Models.Game", b =>
                 {
                     b.Property<int>("Id")
@@ -419,6 +452,17 @@ namespace videogame_randomized_back.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("videogame_randomized_back.Models.DiscoveryLogEntry", b =>
+                {
+                    b.HasOne("videogame_randomized_back.Models.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("videogame_randomized_back.Models.Game", b =>
