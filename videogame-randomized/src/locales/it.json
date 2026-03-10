@@ -1,0 +1,47 @@
+{
+  "nav": {
+    "home": "Home",
+    "vault": "Cassaforte"
+  },
+  "home": {
+    "title": "Scopri la tua prossima Avventura",
+    "subtitle": "Premi il pulsante e lascia decidere al destino a cosa giocherai stasera.",
+    "randomize_button": "Avvia Scanner",
+    "loading": "Elaborazione in corso...",
+    "error": "Impossibile caricare il gioco. Riprova."
+  },
+  "vault": {
+    "title": "La tua Cassaforte",
+    "empty": "La tua cassaforte è vuota.",
+    "empty_subtitle": "Torna indietro ed esplora nuovi giochi per aggiungerli qui!",
+    "games_count": "Giochi salvati",
+    "sort_by": "Ordina per",
+    "sort_added": "Data Aggiunta",
+    "sort_rating": "Voto",
+    "sort_release": "Data di Uscita",
+    "remove_button": "Rimuovi",
+    "view_details": "Dettagli"
+  },
+  "game": {
+    "release_date": "Data di uscita",
+    "metacritic": "Metacritic",
+    "platforms": "Piattaforme",
+    "genres": "Generi",
+    "developers": "Sviluppatori",
+    "description": "Descrizione",
+    "read_more": "Leggi di più",
+    "show_less": "Mostra meno",
+    "view_images": "Vedi Immagini",
+    "watch_trailer": "Guarda Trailer",
+    "add_to_vault": "Aggiungi",
+    "remove_from_vault": "Rimuovi",
+    "no_trailer": "Nessun trailer disponibile.",
+    "no_images": "Nessuna immagine disponibile",
+    "added_success": "Gioco salvato nella Cassaforte!",
+    "removed_success": "Gioco rimosso dalla Cassaforte!"
+  },
+  "error": {
+    "generic": "Qualcosa è andato storto. Riprova.",
+    "network": "Errore di rete. Controlla la tua connessione."
+  }
+}

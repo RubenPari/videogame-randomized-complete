@@ -1,0 +1,47 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "vault": "Bóveda"
+  },
+  "home": {
+    "title": "Descubre tu Próxima Aventura",
+    "subtitle": "Presiona el botón y deja que el destino decida a qué jugar.",
+    "randomize_button": "Iniciar Escáner",
+    "loading": "Procesando...",
+    "error": "Error al cargar el juego. Inténtalo de nuevo."
+  },
+  "vault": {
+    "title": "Tu Bóveda",
+    "empty": "Tu bóveda está vacía.",
+    "empty_subtitle": "¡Vuelve y descubre juegos para añadirlos aquí!",
+    "games_count": "Juegos guardados",
+    "sort_by": "Ordenar por",
+    "sort_added": "Fecha de Adición",
+    "sort_rating": "Valoración",
+    "sort_release": "Fecha de Lanzamiento",
+    "remove_button": "Eliminar",
+    "view_details": "Ver Detalles"
+  },
+  "game": {
+    "release_date": "Lanzamiento",
+    "metacritic": "Metacritic",
+    "platforms": "Plataformas",
+    "genres": "Géneros",
+    "developers": "Desarrolladores",
+    "description": "Descripción",
+    "read_more": "Leer más",
+    "show_less": "Mostrar menos",
+    "view_images": "Ver Imágenes",
+    "watch_trailer": "Ver Tráiler",
+    "add_to_vault": "Añadir",
+    "remove_from_vault": "Eliminar",
+    "no_trailer": "No hay tráiler disponible.",
+    "no_images": "No hay imágenes disponibles",
+    "added_success": "¡Juego añadido a la Bóveda!",
+    "removed_success": "¡Juego eliminado de la Bóveda!"
+  },
+  "error": {
+    "generic": "Algo salió mal. Inténtalo de nuevo.",
+    "network": "Error de red. Comprueba tu conexión."
+  }
+}

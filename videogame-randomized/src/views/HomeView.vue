@@ -13,6 +13,7 @@ import FilterSection from '@/components/FilterSection.vue'
 import GameCard from '@/components/GameCard.vue'
 import GameHistory from '@/components/GameHistory.vue'
 import GameStatePlaceholder from '@/components/GameStatePlaceholder.vue'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 
 // Async Modal (Optimization)
 const SaveGamesModal = defineAsyncComponent(() =>
@@ -123,13 +124,16 @@ const handleClearPastHistory = async () => {
         </div>
 
         <div class="flex items-center gap-3">
-          <!-- Vault Button -->
-          <button @click="openVault"
-            class="group flex items-center gap-2 px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-fuchsia-500/50 rounded-xl transition-all">
-            <svg class="w-5 h-5 text-fuchsia-500 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
-            </svg>
-            <span class="font-bold text-white uppercase text-sm tracking-wider hidden sm:block">Vault</span>
+            <!-- Language Switcher -->
+            <LanguageSwitcher />
+
+            <!-- Vault Button -->
+            <button @click="openVault"
+              class="group flex items-center gap-2 px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-fuchsia-500/50 rounded-xl transition-all">
+              <svg class="w-5 h-5 text-fuchsia-500 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+              </svg>
+              <span class="font-bold text-white uppercase text-sm tracking-wider hidden sm:block">{{ $t('nav.vault') }}</span>
             <span v-if="vault.count > 0" class="flex h-5 w-5 items-center justify-center rounded-md bg-fuchsia-500 text-[10px] font-black text-zinc-950 ml-1">
               {{ vault.count }}
             </span>

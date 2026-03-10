@@ -1,0 +1,47 @@
+{
+  "nav": {
+    "home": "Home",
+    "vault": "Vault"
+  },
+  "home": {
+    "title": "Unleash Your Next Adventure",
+    "subtitle": "Hit the button and let fate decide what you should play next.",
+    "randomize_button": "Engage Scanner",
+    "loading": "Processing...",
+    "error": "Failed to load game. Please try again."
+  },
+  "vault": {
+    "title": "Your Vault",
+    "empty": "Your vault is empty.",
+    "empty_subtitle": "Go back and discover some games to add them here!",
+    "games_count": "Games in Vault",
+    "sort_by": "Sort By",
+    "sort_added": "Date Added",
+    "sort_rating": "Rating",
+    "sort_release": "Release Date",
+    "remove_button": "Remove",
+    "view_details": "View Details"
+  },
+  "game": {
+    "release_date": "Release Date",
+    "metacritic": "Metacritic",
+    "platforms": "Platforms",
+    "genres": "Genres",
+    "developers": "Developers",
+    "description": "Description",
+    "read_more": "Read more",
+    "show_less": "Show less",
+    "view_images": "View Images",
+    "watch_trailer": "Watch Trailer",
+    "add_to_vault": "Add to Vault",
+    "remove_from_vault": "Remove from Vault",
+    "no_trailer": "No trailer available.",
+    "no_images": "No images available",
+    "added_success": "Game added to Vault!",
+    "removed_success": "Game removed from Vault!"
+  },
+  "error": {
+    "generic": "Something went wrong. Try again.",
+    "network": "Network error. Check your connection."
+  }
+}

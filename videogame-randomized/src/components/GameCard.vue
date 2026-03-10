@@ -141,7 +141,7 @@ const formatDate = (dateString) => {
     <div class="p-6 md:p-8 space-y-8 flex-1 flex flex-col">
       <!-- Hardware -->
       <div>
-        <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">Compatible Hardware</h3>
+        <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">{{ $t('game.platforms') }}</h3>
         <div class="flex flex-wrap gap-2">
           <span v-for="platform in game.platforms" :key="platform.platform.id"
             class="text-xs font-mono px-2.5 py-1 bg-zinc-950 border border-zinc-800 text-zinc-400 rounded-md flex items-center gap-2">
@@ -155,7 +155,7 @@ const formatDate = (dateString) => {
       <div v-if="description" class="description-card">
         <div class="flex items-center gap-2.5 mb-4">
           <div class="w-1 h-5 bg-gradient-to-b from-cyan-400 to-fuchsia-500 rounded-full"></div>
-          <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-[0.2em]">Descrizione</h3>
+          <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-[0.2em]">{{ $t('game.description') }}</h3>
         </div>
         <div class="description-content" v-html="description"></div>
       </div>
