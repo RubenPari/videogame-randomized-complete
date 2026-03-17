@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy package configuration to install dependencies
 COPY package*.json ./
 
-# Install project dependencies
-RUN npm install
+# Install project dependencies (npm ci is faster and more reliable)
+RUN npm ci
 
 # Copy the rest of the application files
 COPY . .
