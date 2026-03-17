@@ -1,8 +1,7 @@
 namespace videogame_randomized_back.Models;
 
-public class SmtpSettings
+public class MailtrapSettings
 {
-    public string ApiToken { get; set; } = string.Empty;
     public string FromEmail { get; set; } = string.Empty;
-    public string FromName { get; set; } = "VideoGame Randomizer";
+    public string FromName { get; set; } = string.Empty;
 }
