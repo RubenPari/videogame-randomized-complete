@@ -67,9 +67,6 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// Configure SMTP settings
-builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
-
 // Add HttpClient for Mailtrap API
 builder.Services.AddHttpClient();
 
