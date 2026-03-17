@@ -3,4 +3,4 @@ videogame-randomized-back/obj/
 .DS_Store
 .vscode/
 videogame-randomized/.env.production
-videogame-randomized-back/.env
+.env

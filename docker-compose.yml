@@ -25,6 +25,9 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Server=mysql;Database=videogames;Uid=root;Pwd=password;
+      - MAILTRAP_TOKEN=${MAILTRAP_TOKEN}
+      - MAILTRAP_FROM_EMAIL=${MAILTRAP_FROM_EMAIL}
+      - MAILTRAP_FROM_NAME=VideoGame Randomizer
     depends_on:
       mysql:
         condition: service_healthy
