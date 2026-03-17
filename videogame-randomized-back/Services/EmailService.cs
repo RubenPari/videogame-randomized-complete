@@ -1,25 +1,36 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.Options;
+using DotNetEnv;
 using videogame_randomized_back.Models;
 
 namespace videogame_randomized_back.Services;
 
 public class EmailService
 {
-    private readonly SmtpSettings _settings;
     private readonly ILogger<EmailService> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly string _apiToken;
+    private readonly string _fromEmail;
+    private readonly string _fromName;
 
     public EmailService(
-        IOptions<SmtpSettings> settings,
         ILogger<EmailService> logger,
         IHttpClientFactory httpClientFactory)
     {
-        _settings = settings.Value;
         _logger = logger;
         _httpClientFactory = httpClientFactory;
+
+        // Load environment variables from .env file
+        Env.Load();
+
+        _apiToken = Environment.GetEnvironmentVariable("MAILTRAP_TOKEN")
+            ?? throw new InvalidOperationException("MAILTRAP_TOKEN environment variable is not set");
+
+        _fromEmail = Environment.GetEnvironmentVariable("MAILTRAP_FROM_EMAIL")
+            ?? throw new InvalidOperationException("MAILTRAP_FROM_EMAIL environment variable is not set");
+
+        _fromName = Environment.GetEnvironmentVariable("MAILTRAP_FROM_NAME") ?? "VideoGame Randomizer";
     }
 
     public async Task SendEmailAsync(string toEmail, string subject, string htmlBody)
@@ -28,13 +39,13 @@ public class EmailService
         {
             var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", _settings.ApiToken);
+                new AuthenticationHeaderValue("Bearer", _apiToken);
             client.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
 
             var payload = new
             {
-                from = new { email = _settings.FromEmail, name = _settings.FromName },
+                from = new { email = _fromEmail, name = _fromName },
                 to = new[] { new { email = toEmail } },
                 subject,
                 html = htmlBody,
