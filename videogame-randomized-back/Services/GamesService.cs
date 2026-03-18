@@ -1,23 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using videogame_randomized_back.Data;
+using videogame_randomized_back.DTOs;
 using videogame_randomized_back.Models;
 
 namespace videogame_randomized_back.Services;
 
-public class SavedGamesService
+public class GamesService(AppDbContext db)
 {
-    private readonly AppDbContext _db;
-
-    public SavedGamesService(AppDbContext db)
-    {
-        _db = db;
-    }
-
-    // User-scoped queries
-
     public async Task<List<Game>> GetByUserAsync(string userId)
     {
-        return await _db.Games
+        return await db.Games
             .AsNoTracking()
             .Include(g => g.Genres)
             .Include(g => g.Platforms)
@@ -27,7 +19,7 @@ public class SavedGamesService
 
     public async Task<Game?> GetByUserAsync(string userId, int id)
     {
-        return await _db.Games
+        return await db.Games
             .AsNoTracking()
             .Include(g => g.Genres)
             .Include(g => g.Platforms)
@@ -36,7 +28,7 @@ public class SavedGamesService
 
     public async Task<bool> ExistsByUserAsync(string userId, int id)
     {
-        return await _db.Games.AnyAsync(g => g.Id == id && g.UserId == userId);
+        return await db.Games.AnyAsync(g => g.Id == id && g.UserId == userId);
     }
 
     public async Task<List<Game>> SearchByUserAsync(string userId, string query)
@@ -44,7 +36,7 @@ public class SavedGamesService
         if (string.IsNullOrWhiteSpace(query))
             return await GetByUserAsync(userId);
 
-        return await _db.Games
+        return await db.Games
             .AsNoTracking()
             .Include(g => g.Genres)
             .Include(g => g.Platforms)
@@ -54,7 +46,7 @@ public class SavedGamesService
 
     public async Task<StatisticsDto> GetStatisticsByUserAsync(string userId)
     {
-        var games = await _db.Games
+        var games = await db.Games
             .AsNoTracking()
             .Include(g => g.Genres)
             .Include(g => g.Platforms)
@@ -89,48 +81,41 @@ public class SavedGamesService
 
     public async Task RemoveAllByUserAsync(string userId)
     {
-        var gameIds = await _db.Games
+        var gameIds = await db.Games
             .Where(g => g.UserId == userId)
             .Select(g => g.Id)
             .ToListAsync();
 
-        if (gameIds.Any())
+        if (gameIds.Count != 0)
         {
-            await _db.GameGenres.Where(gg => gameIds.Contains(gg.GameId)).ExecuteDeleteAsync();
-            await _db.GamePlatforms.Where(gp => gameIds.Contains(gp.GameId)).ExecuteDeleteAsync();
-            await _db.Games.Where(g => g.UserId == userId).ExecuteDeleteAsync();
+            await db.GameGenres.Where(gg => gameIds.Contains(gg.GameId)).ExecuteDeleteAsync();
+            await db.GamePlatforms.Where(gp => gameIds.Contains(gp.GameId)).ExecuteDeleteAsync();
+            await db.Games.Where(g => g.UserId == userId).ExecuteDeleteAsync();
         }
     }
-
-    // Non-scoped write operations (game is already associated with user)
-
+    
     public async Task CreateAsync(Game newGame)
     {
         await SyncGenresAndPlatforms(newGame);
-        _db.Games.Add(newGame);
-        await _db.SaveChangesAsync();
+        db.Games.Add(newGame);
+        await db.SaveChangesAsync();
     }
 
-    public async Task UpdateAsync(int id, Game updatedGame)
+    public async Task UpdateAsync(Game updatedGame)
     {
         await SyncGenresAndPlatforms(updatedGame);
-        _db.Games.Update(updatedGame);
-        await _db.SaveChangesAsync();
+        db.Games.Update(updatedGame);
+        await db.SaveChangesAsync();
     }
 
     public async Task RemoveAsync(int id)
     {
-        var game = await _db.Games.FindAsync(id);
+        var game = await db.Games.FindAsync(id);
         if (game != null)
         {
-            _db.Games.Remove(game);
-            await _db.SaveChangesAsync();
+            db.Games.Remove(game);
+            await db.SaveChangesAsync();
         }
-    }
-
-    public async Task<bool> ExistsAsync(int id)
-    {
-        return await _db.Games.AnyAsync(g => g.Id == id);
     }
 
     private async Task SyncGenresAndPlatforms(Game game)
@@ -138,7 +123,7 @@ public class SavedGamesService
         var syncedGenres = new List<Genre>();
         foreach (var genre in game.Genres)
         {
-            var tracked = _db.ChangeTracker.Entries<Genre>()
+            var tracked = db.ChangeTracker.Entries<Genre>()
                 .FirstOrDefault(e => e.Entity.Id == genre.Id)?.Entity;
 
             if (tracked != null)
@@ -147,7 +132,7 @@ public class SavedGamesService
             }
             else
             {
-                var existing = await _db.Genres.FindAsync(genre.Id);
+                var existing = await db.Genres.FindAsync(genre.Id);
                 syncedGenres.Add(existing ?? genre);
             }
         }
@@ -156,7 +141,7 @@ public class SavedGamesService
         var syncedPlatforms = new List<Platform>();
         foreach (var platform in game.Platforms)
         {
-            var tracked = _db.ChangeTracker.Entries<Platform>()
+            var tracked = db.ChangeTracker.Entries<Platform>()
                 .FirstOrDefault(e => e.Entity.Id == platform.Id)?.Entity;
 
             if (tracked != null)
@@ -165,18 +150,10 @@ public class SavedGamesService
             }
             else
             {
-                var existing = await _db.Platforms.FindAsync(platform.Id);
+                var existing = await db.Platforms.FindAsync(platform.Id);
                 syncedPlatforms.Add(existing ?? platform);
             }
         }
         game.Platforms = syncedPlatforms;
     }
-}
-
-public class StatisticsDto
-{
-    public int TotalGames { get; set; }
-    public double AverageRating { get; set; }
-    public Dictionary<string, int> GenreCount { get; set; } = new();
-    public Dictionary<string, int> PlatformCount { get; set; } = new();
 }

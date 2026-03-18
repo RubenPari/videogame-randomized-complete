@@ -40,7 +40,7 @@ public static class AuthEndpoints
         HttpContext httpContext)
     {
         var result = await authService.RegisterAsync(dto.Email, dto.Password);
-        if (!result.Success)
+        if (!result.IsSuccess)
         {
             return TypedResults.BadRequest((object)new { errors = result.Errors });
         }
@@ -69,7 +69,7 @@ public static class AuthEndpoints
         AuthService authService)
     {
         var result = await authService.LoginAsync(dto.Email, dto.Password);
-        if (!result.Success)
+        if (!result.IsSuccess)
         {
             return TypedResults.BadRequest((object)new { error = result.Error });
         }
@@ -85,7 +85,7 @@ public static class AuthEndpoints
         var decodedToken = Uri.UnescapeDataString(token);
         var result = await authService.ConfirmEmailAsync(userId, decodedToken);
 
-        if (!result.Success)
+        if (!result.IsSuccess)
         {
             return TypedResults.BadRequest((object)new { error = result.Error });
         }
@@ -124,7 +124,7 @@ public static class AuthEndpoints
         var decodedToken = Uri.UnescapeDataString(dto.Token);
         var result = await authService.ResetPasswordAsync(dto.UserId, decodedToken, dto.NewPassword);
 
-        if (!result.Success)
+        if (!result.IsSuccess)
         {
             return TypedResults.BadRequest((object)new { error = result.Error });
         }
@@ -144,7 +144,7 @@ public static class AuthEndpoints
         }
 
         var result = await authService.ChangePasswordAsync(userId, dto.CurrentPassword, dto.NewPassword);
-        if (!result.Success)
+        if (!result.IsSuccess)
         {
             return TypedResults.BadRequest((object)new { error = result.Error });
         }

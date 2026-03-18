@@ -43,7 +43,7 @@ public static class SavedGamesEndpoints
 
     private static async Task<Ok<List<GameDto>>> GetSavedGames(
         ClaimsPrincipal user,
-        SavedGamesService service,
+        GamesService service,
         GameMapper mapper)
     {
         var userId = GetUserId(user);
@@ -54,7 +54,7 @@ public static class SavedGamesEndpoints
     private static async Task<Results<Ok<GameDto>, NotFound>> GetSavedGameById(
         int id,
         ClaimsPrincipal user,
-        SavedGamesService service,
+        GamesService service,
         GameMapper mapper)
     {
         var userId = GetUserId(user);
@@ -67,7 +67,7 @@ public static class SavedGamesEndpoints
     private static async Task<Results<Created<GameDto>, Conflict<object>>> CreateSavedGame(
         CreateGameDto dto,
         ClaimsPrincipal user,
-        SavedGamesService service,
+        GamesService service,
         GameMapper mapper)
     {
         var userId = GetUserId(user);
@@ -89,7 +89,7 @@ public static class SavedGamesEndpoints
         int id,
         UpdateGameDto dto,
         ClaimsPrincipal user,
-        SavedGamesService service)
+        GamesService service)
     {
         var userId = GetUserId(user);
         var game = await service.GetByUserAsync(userId, id);
@@ -98,14 +98,14 @@ public static class SavedGamesEndpoints
         if (dto.PersonalRating.HasValue) game.PersonalRating = dto.PersonalRating;
         if (!string.IsNullOrEmpty(dto.Note)) game.Note = dto.Note;
 
-        await service.UpdateAsync(id, game);
+        await service.UpdateAsync(game);
         return TypedResults.Ok();
     }
 
     private static async Task<Results<Ok, NotFound>> DeleteSavedGame(
         int id,
         ClaimsPrincipal user,
-        SavedGamesService service)
+        GamesService service)
     {
         var userId = GetUserId(user);
         if (!await service.ExistsByUserAsync(userId, id)) return TypedResults.NotFound();
@@ -115,7 +115,7 @@ public static class SavedGamesEndpoints
 
     private static async Task<Ok> DeleteAllSavedGames(
         ClaimsPrincipal user,
-        SavedGamesService service)
+        GamesService service)
     {
         var userId = GetUserId(user);
         await service.RemoveAllByUserAsync(userId);
@@ -125,7 +125,7 @@ public static class SavedGamesEndpoints
     private static async Task<Ok<object>> CheckSavedGame(
         int id,
         ClaimsPrincipal user,
-        SavedGamesService service)
+        GamesService service)
     {
         var userId = GetUserId(user);
         var isSaved = await service.ExistsByUserAsync(userId, id);
@@ -134,7 +134,7 @@ public static class SavedGamesEndpoints
 
     private static async Task<Ok<object>> GetStatistics(
         ClaimsPrincipal user,
-        SavedGamesService service,
+        GamesService service,
         GameMapper mapper)
     {
         var userId = GetUserId(user);
@@ -145,7 +145,7 @@ public static class SavedGamesEndpoints
     private static async Task<Ok<object>> SearchSavedGames(
         [FromQuery] string q,
         ClaimsPrincipal user,
-        SavedGamesService service,
+        GamesService service,
         GameMapper mapper)
     {
         var userId = GetUserId(user);
@@ -156,7 +156,7 @@ public static class SavedGamesEndpoints
 
     private static async Task<FileContentHttpResult> ExportSavedGames(
         ClaimsPrincipal user,
-        SavedGamesService service)
+        GamesService service)
     {
         var userId = GetUserId(user);
         var games = await service.GetByUserAsync(userId);
@@ -168,7 +168,7 @@ public static class SavedGamesEndpoints
     private static async Task<Ok> ImportSavedGames(
         [FromBody] List<CreateGameDto>? gameDtos,
         ClaimsPrincipal user,
-        SavedGamesService service,
+        GamesService service,
         GameMapper mapper)
     {
         var userId = GetUserId(user);
@@ -186,7 +186,7 @@ public static class SavedGamesEndpoints
             }
             else
             {
-                await service.UpdateAsync(game.Id, game);
+                await service.UpdateAsync(game);
             }
         }
         return TypedResults.Ok();
@@ -196,14 +196,14 @@ public static class SavedGamesEndpoints
         int id,
         [FromBody] NoteRequest request,
         ClaimsPrincipal user,
-        SavedGamesService service)
+        GamesService service)
     {
         var userId = GetUserId(user);
         var game = await service.GetByUserAsync(userId, id);
         if (game is null) return TypedResults.NotFound();
 
         game.Note = request.Note;
-        await service.UpdateAsync(id, game);
+        await service.UpdateAsync(game);
         return TypedResults.Ok();
     }
 
@@ -211,14 +211,14 @@ public static class SavedGamesEndpoints
         int id,
         [FromBody] RatingRequest request,
         ClaimsPrincipal user,
-        SavedGamesService service)
+        GamesService service)
     {
         var userId = GetUserId(user);
         var game = await service.GetByUserAsync(userId, id);
         if (game is null) return TypedResults.NotFound();
 
         game.PersonalRating = request.PersonalRating;
-        await service.UpdateAsync(id, game);
+        await service.UpdateAsync(game);
         return TypedResults.Ok();
     }
 }

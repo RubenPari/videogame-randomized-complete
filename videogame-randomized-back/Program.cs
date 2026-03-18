@@ -71,7 +71,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddHttpClient();
 
 // Add services to the container
-builder.Services.AddScoped<SavedGamesService>();
+builder.Services.AddScoped<GamesService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<GameMapper>();
