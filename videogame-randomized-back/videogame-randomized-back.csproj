@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>videogame_randomized_back</RootNamespace>
+    <NoWarn>$(NoWarn);CA1071</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

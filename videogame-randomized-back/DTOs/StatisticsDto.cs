@@ -2,8 +2,8 @@ namespace videogame_randomized_back.DTOs;
 
 public class StatisticsDto
 {
-    public int TotalGames { get; set; }
-    public double AverageRating { get; set; }
-    public Dictionary<string, int> GenreCount { get; set; } = new();
-    public Dictionary<string, int> PlatformCount { get; set; } = new();
+    public int TotalGames { get; init; }
+    public double AverageRating { get; init; }
+    public Dictionary<string, int> GenreCount { get; init; } = new();
+    public Dictionary<string, int> PlatformCount { get; init; } = new();
 }

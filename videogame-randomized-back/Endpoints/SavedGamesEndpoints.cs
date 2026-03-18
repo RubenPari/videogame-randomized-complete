@@ -202,7 +202,7 @@ public static class SavedGamesEndpoints
         var game = await service.GetByUserAsync(userId, id);
         if (game is null) return TypedResults.NotFound();
 
-        game.Note = request.Note;
+        game.Note = NoteRequest.Note;
         await service.UpdateAsync(game);
         return TypedResults.Ok();
     }
@@ -217,7 +217,7 @@ public static class SavedGamesEndpoints
         var game = await service.GetByUserAsync(userId, id);
         if (game is null) return TypedResults.NotFound();
 
-        game.PersonalRating = request.PersonalRating;
+        game.PersonalRating = RatingRequest.PersonalRating;
         await service.UpdateAsync(game);
         return TypedResults.Ok();
     }
