@@ -1,11 +1,5 @@
 namespace videogame_randomized_back.DTOs;
 
-public class NoteRequest
-{
-    public static string Note => string.Empty;
-}
+public record NoteRequest(string Note);
 
-public class RatingRequest
-{
-    public static int PersonalRating => 0;
-}
+public record RatingRequest(int PersonalRating);

@@ -66,3 +66,11 @@ public record GameStatsDto
     public Dictionary<string, int> GenreCount { get; init; } = new();
     public Dictionary<string, int> PlatformCount { get; init; } = new();
 }
+
+public record MessageResponseDto(string Message);
+
+public record IsSavedResponseDto(bool IsSaved);
+
+public record SearchGamesResponseDto(IEnumerable<GameDto> Games);
+
+public record StatisticsResponseDto(GameStatsDto Statistics);

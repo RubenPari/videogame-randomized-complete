@@ -46,14 +46,14 @@ public class SavedGamesController(GamesService service, GameMapper mapper) : Con
     /// </summary>
     [HttpPost]
     [ProducesResponseType(typeof(GameDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(MessageResponseDto), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<GameDto>> CreateSavedGame([FromBody] CreateGameDto dto)
     {
         var userId = GetUserId();
 
         if (await service.ExistsByUserAsync(userId, dto.Id))
         {
-            return Conflict(new { message = "Game already exists" });
+            return Conflict(new MessageResponseDto("Game already exists"));
         }
 
         var game = mapper.CreateDtoToGame(dto);
@@ -73,11 +73,12 @@ public class SavedGamesController(GamesService service, GameMapper mapper) : Con
     public async Task<IActionResult> UpdateSavedGame(int id, [FromBody] UpdateGameDto dto)
     {
         var userId = GetUserId();
+        
         var game = await service.GetByUserAsync(userId, id);
         if (game is null) return NotFound();
 
         if (dto.PersonalRating.HasValue) game.PersonalRating = dto.PersonalRating;
-        if (!string.IsNullOrEmpty(dto.Note)) game.Note = dto.Note;
+        if (dto.Note != null) game.Note = dto.Note;
 
         await service.UpdateAsync(game);
         return Ok();
@@ -113,37 +114,38 @@ public class SavedGamesController(GamesService service, GameMapper mapper) : Con
     /// Checks if a game is saved by the current user
     /// </summary>
     [HttpGet("check/{id:int}")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
-    public async Task<ActionResult<object>> CheckSavedGame(int id)
+    [ProducesResponseType(typeof(IsSavedResponseDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IsSavedResponseDto>> CheckSavedGame(int id)
     {
         var userId = GetUserId();
         var isSaved = await service.ExistsByUserAsync(userId, id);
-        return Ok(new { isSaved });
+        return Ok(new IsSavedResponseDto(isSaved));
     }
 
     /// <summary>
     /// Gets statistics for the current user's saved games
     /// </summary>
     [HttpGet("statistics")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
-    public async Task<ActionResult<object>> GetStatistics()
+    [ProducesResponseType(typeof(StatisticsResponseDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<StatisticsResponseDto>> GetStatistics()
     {
         var userId = GetUserId();
         var stats = await service.GetStatisticsByUserAsync(userId);
-        return Ok(new { statistics = mapper.StatsToDto(stats) });
+        return Ok(new StatisticsResponseDto(mapper.StatsToDto(stats)));
     }
 
     /// <summary>
     /// Searches saved games by query string for the current user
     /// </summary>
     [HttpGet("search")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
-    public async Task<ActionResult<object>> SearchSavedGames([FromQuery] string q)
+    [ProducesResponseType(typeof(SearchGamesResponseDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<SearchGamesResponseDto>> SearchSavedGames([FromQuery] string q)
     {
         var userId = GetUserId();
-        if (string.IsNullOrWhiteSpace(q)) return Ok(new { games = new List<GameDto>() });
+        if (string.IsNullOrWhiteSpace(q)) return Ok(new SearchGamesResponseDto([]));
+        
         var games = await service.SearchByUserAsync(userId, q);
-        return Ok(new { games = mapper.GamesToDtos(games) });
+        return Ok(new SearchGamesResponseDto(mapper.GamesToDtos(games)));
     }
 
     /// <summary>
@@ -155,7 +157,10 @@ public class SavedGamesController(GamesService service, GameMapper mapper) : Con
     {
         var userId = GetUserId();
         var games = await service.GetByUserAsync(userId);
-        var json = System.Text.Json.JsonSerializer.Serialize(games);
+        
+        var dtos = mapper.GamesToDtos(games);
+        
+        var json = System.Text.Json.JsonSerializer.Serialize(dtos);
         var bytes = System.Text.Encoding.UTF8.GetBytes(json);
         return File(bytes, "application/json", "saved_games_export.json");
     }
@@ -170,6 +175,10 @@ public class SavedGamesController(GamesService service, GameMapper mapper) : Con
         var userId = GetUserId();
         if (gameDtos == null || gameDtos.Count == 0) return Ok();
 
+        // TODO: Implementare un metodo UpsertManyAsync per evitare di fare N chiamate al DB.
+        // ATTENZIONE ALLE PERFORMANCE: Questo approccio causa il problema N+1 Query.
+        // Un miglioramento futuro sarebbe creare nel service un metodo: 
+        // await service.UpsertManyAsync(userId, listOfGames);
         foreach (var dto in gameDtos)
         {
             var exists = await service.ExistsByUserAsync(userId, dto.Id);
@@ -182,6 +191,9 @@ public class SavedGamesController(GamesService service, GameMapper mapper) : Con
             }
             else
             {
+                // TODO: Implementare un metodo UpdateByUserAsync per evitare di recuperare l'entità due volte.
+                // ATTENZIONE: Stai facendo l'update passando una nuova entità invece di recuperarla dal DB.
+                // Se `CreateDtoToGame` non mappa TUTTI i campi del database (es. DateAdded), verranno sovrascritti con null.
                 await service.UpdateAsync(game);
             }
         }
@@ -222,7 +234,3 @@ public class SavedGamesController(GamesService service, GameMapper mapper) : Con
         return Ok();
     }
 }
-
-public record NoteRequest(string Note);
-
-public record RatingRequest(int PersonalRating);
