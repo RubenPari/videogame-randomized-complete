@@ -118,6 +118,55 @@ public class GamesService(AppDbContext db)
         }
     }
 
+    public async Task UpsertManyAsync(string userId, IEnumerable<Game> games)
+    {
+        var gameList = games.ToList();
+        if (gameList.Count == 0) return;
+
+        var incomingIds = gameList.Select(g => g.Id).ToList();
+        
+        var existingGames = await db.Games
+            .Where(g => g.UserId == userId && incomingIds.Contains(g.Id))
+            .ToDictionaryAsync(g => g.Id);
+
+        foreach (var game in gameList)
+        {
+            game.UserId = userId;
+            
+            if (existingGames.TryGetValue(game.Id, out var existing))
+            {
+                existing.Note = game.Note;
+                existing.PersonalRating = game.PersonalRating;
+                await SyncGenresAndPlatforms(existing);
+            }
+            else
+            {
+                await SyncGenresAndPlatforms(game);
+                db.Games.Add(game);
+            }
+        }
+        
+        await db.SaveChangesAsync();
+    }
+
+    public async Task<bool> UpdateByUserAsync(string userId, int id, Game updatedGame)
+    {
+        var game = await db.Games
+            .Include(g => g.Genres)
+            .Include(g => g.Platforms)
+            .FirstOrDefaultAsync(g => g.Id == id && g.UserId == userId);
+        
+        if (game is null) return false;
+
+        game.Note = updatedGame.Note;
+        game.PersonalRating = updatedGame.PersonalRating;
+        
+        await SyncGenresAndPlatforms(game);
+        await db.SaveChangesAsync();
+        
+        return true;
+    }
+
     private async Task SyncGenresAndPlatforms(Game game)
     {
         var syncedGenres = new List<Genre>();

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using videogame_randomized_back.DTOs;
 using videogame_randomized_back.Mappers;
+using videogame_randomized_back.Models;
 using videogame_randomized_back.Services;
 
 namespace videogame_randomized_back.Controllers;
@@ -175,28 +176,14 @@ public class SavedGamesController(GamesService service, GameMapper mapper) : Con
         var userId = GetUserId();
         if (gameDtos == null || gameDtos.Count == 0) return Ok();
 
-        // TODO: Implementare un metodo UpsertManyAsync per evitare di fare N chiamate al DB.
-        // ATTENZIONE ALLE PERFORMANCE: Questo approccio causa il problema N+1 Query.
-        // Un miglioramento futuro sarebbe creare nel service un metodo: 
-        // await service.UpsertManyAsync(userId, listOfGames);
-        foreach (var dto in gameDtos)
+        var games = gameDtos.Select(dto =>
         {
-            var exists = await service.ExistsByUserAsync(userId, dto.Id);
             var game = mapper.CreateDtoToGame(dto);
             game.UserId = userId;
+            return game;
+        }).ToList();
 
-            if (!exists)
-            {
-                await service.CreateAsync(game);
-            }
-            else
-            {
-                // TODO: Implementare un metodo UpdateByUserAsync per evitare di recuperare l'entità due volte.
-                // ATTENZIONE: Stai facendo l'update passando una nuova entità invece di recuperarla dal DB.
-                // Se `CreateDtoToGame` non mappa TUTTI i campi del database (es. DateAdded), verranno sovrascritti con null.
-                await service.UpdateAsync(game);
-            }
-        }
+        await service.UpsertManyAsync(userId, games);
         return Ok();
     }
 
@@ -209,11 +196,9 @@ public class SavedGamesController(GamesService service, GameMapper mapper) : Con
     public async Task<IActionResult> AddNote(int id, [FromBody] NoteRequest request)
     {
         var userId = GetUserId();
-        var game = await service.GetByUserAsync(userId, id);
-        if (game is null) return NotFound();
-
-        game.Note = request.Note;
-        await service.UpdateAsync(game);
+        var game = new Game { Note = request.Note };
+        var updated = await service.UpdateByUserAsync(userId, id, game);
+        if (!updated) return NotFound();
         return Ok();
     }
 
@@ -226,11 +211,9 @@ public class SavedGamesController(GamesService service, GameMapper mapper) : Con
     public async Task<IActionResult> AddRating(int id, [FromBody] RatingRequest request)
     {
         var userId = GetUserId();
-        var game = await service.GetByUserAsync(userId, id);
-        if (game is null) return NotFound();
-
-        game.PersonalRating = request.PersonalRating;
-        await service.UpdateAsync(game);
+        var game = new Game { PersonalRating = request.PersonalRating };
+        var updated = await service.UpdateByUserAsync(userId, id, game);
+        if (!updated) return NotFound();
         return Ok();
     }
 }
