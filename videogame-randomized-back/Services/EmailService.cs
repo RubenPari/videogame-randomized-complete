@@ -1,35 +1,22 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using DotNetEnv;
+using Microsoft.Extensions.Options;
+using videogame_randomized_back.Models;
 
 namespace videogame_randomized_back.Services;
 
-public class EmailService
+public class EmailService(
+    ILogger<EmailService> logger,
+    IHttpClientFactory httpClientFactory,
+    IOptions<EmailSettings> emailSettings)
 {
-    private readonly ILogger<EmailService> _logger;
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly string _apiToken;
-    private readonly string _fromEmail;
-    private readonly string _fromName;
+    private readonly ILogger<EmailService> _logger = logger;
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+    private readonly EmailSettings _emailSettings = emailSettings.Value;
 
-    public EmailService(
-        ILogger<EmailService> logger,
-        IHttpClientFactory httpClientFactory)
-    {
-        _logger = logger;
-        _httpClientFactory = httpClientFactory;
-
-        Env.Load();
-
-        _apiToken = Environment.GetEnvironmentVariable("MAILTRAP_TOKEN")
-            ?? throw new InvalidOperationException("MAILTRAP_TOKEN environment variable is not set");
-
-        _fromEmail = Environment.GetEnvironmentVariable("MAILTRAP_FROM_EMAIL")
-            ?? throw new InvalidOperationException("MAILTRAP_FROM_EMAIL environment variable is not set");
-
-        _fromName = Environment.GetEnvironmentVariable("MAILTRAP_FROM_NAME") ?? "VideoGame Randomizer";
-    }
+    private string ApiToken => _emailSettings.ApiToken 
+        ?? throw new InvalidOperationException("MailtrapSettings:ApiToken is not configured");
 
     private async Task SendEmailAsync(string toEmail, string subject, string htmlBody)
     {
@@ -38,13 +25,13 @@ public class EmailService
             var client = _httpClientFactory.CreateClient();
             
             client.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", _apiToken);
+                new AuthenticationHeaderValue("Bearer", ApiToken);
             client.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
 
             var payload = new
             {
-                from = new { email = _fromEmail, name = _fromName },
+                from = new { email = _emailSettings.FromEmail, name = _emailSettings.FromName },
                 to = new[] { new { email = toEmail } },
                 subject,
                 html = htmlBody,

@@ -57,7 +57,7 @@ public class AuthController(AuthService authService, EmailService emailService) 
             return BadRequest(new { error = result.Error });
         }
 
-        return Ok(new AuthResponseDto());
+        return Ok(new AuthResponseDto(result.Token!, result.Email!));
     }
 
     /// <summary>

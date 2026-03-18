@@ -11,7 +11,6 @@ using videogame_randomized_back.DTOs;
 using videogame_randomized_back.Mappers;
 using videogame_randomized_back.Models;
 using videogame_randomized_back.Services;
-using videogame_randomized_back.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +45,11 @@ builder.Services.Configure<JwtSettings>(jwtSettings);
 
 var secret = jwtSettings.Get<JwtSettings>()?.Secret ?? "super-secret-key-change-in-production-min-32-chars!";
 
+if (secret.Length < 32)
+{
+    throw new InvalidOperationException("JWT secret must be at least 32 characters long for production security.");
+}
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -70,6 +74,10 @@ builder.Services.AddAuthorization();
 // Add HttpClient for Mailtrap API
 builder.Services.AddHttpClient();
 
+// Configure Email settings
+var emailSettings = builder.Configuration.GetSection("MailtrapSettings");
+builder.Services.Configure<EmailSettings>(emailSettings);
+
 // Add services to the container
 builder.Services.AddScoped<GamesService>();
 builder.Services.AddScoped<AuthService>();
@@ -87,11 +95,21 @@ builder.Services.AddControllers()
 
 builder.Services.AddCors(options =>
 {
+    var corsSettings = builder.Configuration.GetSection("CorsSettings").Get<CorsSettings>();
+    var allowedOrigins = corsSettings?.AllowedOrigins ?? [];
+    
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        if (allowedOrigins.Length > 0)
+        {
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        }
+        else
+        {
+            policy.DisallowCredentials();
+        }
     });
 });
 

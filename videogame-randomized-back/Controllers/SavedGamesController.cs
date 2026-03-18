@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using videogame_randomized_back.DTOs;
 using videogame_randomized_back.Mappers;
-using videogame_randomized_back.Models;
 using videogame_randomized_back.Services;
 
 namespace videogame_randomized_back.Controllers;
@@ -184,36 +183,6 @@ public class SavedGamesController(GamesService service, GameMapper mapper) : Con
         }).ToList();
 
         await service.UpsertManyAsync(userId, games);
-        return Ok();
-    }
-
-    /// <summary>
-    /// Adds a note to a saved game
-    /// </summary>
-    [HttpPost("{id:int}/note")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> AddNote(int id, [FromBody] NoteRequest request)
-    {
-        var userId = GetUserId();
-        var game = new Game { Note = request.Note };
-        var updated = await service.UpdateByUserAsync(userId, id, game);
-        if (!updated) return NotFound();
-        return Ok();
-    }
-
-    /// <summary>
-    /// Adds a personal rating to a saved game
-    /// </summary>
-    [HttpPost("{id:int}/rating")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> AddRating(int id, [FromBody] RatingRequest request)
-    {
-        var userId = GetUserId();
-        var game = new Game { PersonalRating = request.PersonalRating };
-        var updated = await service.UpdateByUserAsync(userId, id, game);
-        if (!updated) return NotFound();
         return Ok();
     }
 }

@@ -10,7 +10,7 @@ public record ResetPasswordDto(string UserId, string Token, string NewPassword);
 
 public record ChangePasswordDto(string CurrentPassword, string NewPassword);
 
-public record AuthResponseDto;
+public record AuthResponseDto(string Token, string Email);
 
 public record AuthResult
 {

@@ -69,11 +69,11 @@ public class AuthService(
         var result = await userManager.CreateAsync(user, password);
         if (!result.Succeeded)
         {
-            logger.LogWarning("Registrazione fallita per l'email: {Email}", email);
+            logger.LogWarning("Registration failed for email: {Email}", email);
             return RegistrationResult.Failed(result.Errors.Select(e => e.Description));
         }
 
-        logger.LogInformation("Nuovo utente registrato con successo: {Email}", email);
+        logger.LogInformation("New user registered successfully: {Email}", email);
         return RegistrationResult.Succeeded(user.Email);
     }
 
@@ -101,7 +101,7 @@ public class AuthService(
         var user = await userManager.FindByIdAsync(userId);
         if (user == null) 
         {
-            logger.LogWarning("Conferma email fallita: Utente {UserId} non trovato", userId);
+            logger.LogWarning("Email confirmation failed: User {UserId} not found", userId);
             return ConfirmationResult.Failed("User not found");
         }
 
@@ -112,7 +112,7 @@ public class AuthService(
             return ConfirmationResult.Failed(string.Join(", ", result.Errors.Select(e => e.Description)));
         }
 
-        logger.LogInformation("Email confermata per l'utente: {UserId}", userId);
+        logger.LogInformation("Email confirmed for user: {UserId}", userId);
         return ConfirmationResult.Succeeded();
     }
 
@@ -127,26 +127,26 @@ public class AuthService(
         var user = await userManager.FindByEmailAsync(email);
         if (user == null)
         {
-            logger.LogWarning("Tentativo di login fallito: Email {Email} non trovata", email);
+            logger.LogWarning("Login attempt failed: Email {Email} not found", email);
             return LoginResult.Failed("Invalid email or password");
         }
 
         if (!await userManager.IsEmailConfirmedAsync(user))
         {
-            logger.LogInformation("Tentativo di login per email non confermata: {Email}", email);
+            logger.LogInformation("Login attempt for unconfirmed email: {Email}", email);
             return LoginResult.Failed("Please confirm your email before logging in");
         }
 
         var isPasswordValid = await userManager.CheckPasswordAsync(user, password);
         if (!isPasswordValid)
         {
-            logger.LogWarning("Tentativo di login fallito: Password errata per {Email}", email);
+            logger.LogWarning("Login attempt failed: Invalid password for {Email}", email);
             return LoginResult.Failed("Invalid email or password");
         }
 
         var token = await GenerateJwtTokenAsync(user);
         
-        logger.LogInformation("Login effettuato con successo: {Email}", email);
+        logger.LogInformation("Login successful for user: {Email}", email);
         return LoginResult.Succeeded(token, user.Email!);
     }
 
@@ -190,11 +190,11 @@ public class AuthService(
         
         if (!result.Succeeded)
         {
-            logger.LogWarning("Reset password fallito per l'utente {UserId}", userId);
+            logger.LogWarning("Password reset failed for user {UserId}", userId);
             return AuthResult.Failure(string.Join(", ", result.Errors.Select(e => e.Description)));
         }
 
-        logger.LogInformation("Password resettata con successo per l'utente {UserId}", userId);
+        logger.LogInformation("Password reset successfully for user {UserId}", userId);
         return AuthResult.Success();
     }
 
@@ -214,11 +214,11 @@ public class AuthService(
         
         if (!result.Succeeded)
         {
-            logger.LogWarning("Cambio password fallito per l'utente {UserId}", userId);
+            logger.LogWarning("Password change failed for user {UserId}", userId);
             return AuthResult.Failure(string.Join(", ", result.Errors.Select(e => e.Description)));
         }
 
-        logger.LogInformation("Password cambiata con successo per l'utente {UserId}", userId);
+        logger.LogInformation("Password changed successfully for user {UserId}", userId);
         return AuthResult.Success();
     }
 }
