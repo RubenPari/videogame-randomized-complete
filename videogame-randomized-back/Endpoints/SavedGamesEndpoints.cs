@@ -166,13 +166,13 @@ public static class SavedGamesEndpoints
     }
 
     private static async Task<Ok> ImportSavedGames(
-        [FromBody] List<CreateGameDto> gameDtos,
+        [FromBody] List<CreateGameDto>? gameDtos,
         ClaimsPrincipal user,
         SavedGamesService service,
         GameMapper mapper)
     {
         var userId = GetUserId(user);
-        if (gameDtos == null || !gameDtos.Any()) return TypedResults.Ok();
+        if (gameDtos == null || gameDtos.Count == 0) return TypedResults.Ok();
 
         foreach (var dto in gameDtos)
         {

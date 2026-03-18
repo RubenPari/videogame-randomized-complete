@@ -44,7 +44,7 @@ public static class DiscoveryLogEndpoints
     /// Save the current session's discovered games to the user's log
     /// </summary>
     private static async Task<IResult> SaveDiscoveryLog(
-        [FromBody] List<DiscoveryLogDto> entries,
+        [FromBody] List<DiscoveryLogDto>? entries,
         ClaimsPrincipal user,
         AppDbContext db)
     {
@@ -70,11 +70,10 @@ public static class DiscoveryLogEndpoints
             })
             .ToList();
 
-        if (newEntries.Count > 0)
-        {
-            db.DiscoveryLog.AddRange(newEntries);
-            await db.SaveChangesAsync();
-        }
+        if (newEntries.Count <= 0) return Results.Ok(new { saved = newEntries.Count });
+        
+        db.DiscoveryLog.AddRange(newEntries);
+        await db.SaveChangesAsync();
 
         return Results.Ok(new { saved = newEntries.Count });
     }
@@ -95,4 +94,4 @@ public static class DiscoveryLogEndpoints
     }
 }
 
-public record DiscoveryLogDto(int Id, string Name);
+public abstract record DiscoveryLogDto(int Id, string Name);

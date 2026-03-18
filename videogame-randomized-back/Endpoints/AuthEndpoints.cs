@@ -49,16 +49,17 @@ public static class AuthEndpoints
         var token = await authService.GenerateEmailConfirmationTokenAsync(dto.Email);
         var userId = await authService.GetUserIdByEmailAsync(dto.Email);
 
-        if (token != null && userId != null)
-        {
-            var encodedToken = Uri.EscapeDataString(token);
-            // Build the confirmation link pointing to the frontend
-            var frontendBaseUrl = httpContext.Request.Headers["Origin"].FirstOrDefault()
-                ?? "http://localhost:5173";
-            var confirmationLink = $"{frontendBaseUrl}/confirm-email?userId={userId}&token={encodedToken}";
+        if (token == null || userId == null)
+            return TypedResults.Ok((object)new
+                { message = "Registration successful. Please check your email to confirm your account." });
+        
+        var encodedToken = Uri.EscapeDataString(token);
+        // Build the confirmation link pointing to the frontend
+        var frontendBaseUrl = httpContext.Request.Headers.Origin.FirstOrDefault()
+                              ?? "http://localhost:5173";
+        var confirmationLink = $"{frontendBaseUrl}/confirm-email?userId={userId}&token={encodedToken}";
 
-            await emailService.SendConfirmationEmailAsync(dto.Email, confirmationLink);
-        }
+        await emailService.SendConfirmationEmailAsync(dto.Email, confirmationLink);
 
         return TypedResults.Ok((object)new { message = "Registration successful. Please check your email to confirm your account." });
     }
@@ -73,7 +74,7 @@ public static class AuthEndpoints
             return TypedResults.BadRequest((object)new { error = result.Error });
         }
 
-        return TypedResults.Ok(new AuthResponseDto(result.Token!, result.Email!));
+        return TypedResults.Ok(new AuthResponseDto());
     }
 
     private static async Task<Results<Ok<object>, BadRequest<object>>> ConfirmEmail(
@@ -101,15 +102,16 @@ public static class AuthEndpoints
         var resetToken = await authService.GeneratePasswordResetTokenAsync(dto.Email);
         var userId = await authService.GetUserIdByEmailAsync(dto.Email);
 
-        if (resetToken != null && userId != null)
-        {
-            var encodedToken = Uri.EscapeDataString(resetToken);
-            var frontendBaseUrl = httpContext.Request.Headers["Origin"].FirstOrDefault()
-                ?? "http://localhost:5173";
-            var resetLink = $"{frontendBaseUrl}/reset-password?userId={userId}&token={encodedToken}";
+        if (resetToken == null || userId == null)
+            return TypedResults.Ok(
+                (object)new { message = "If the email exists, a password reset link has been sent." });
+        
+        var encodedToken = Uri.EscapeDataString(resetToken);
+        var frontendBaseUrl = httpContext.Request.Headers.Origin.FirstOrDefault()
+                              ?? "http://localhost:5173";
+        var resetLink = $"{frontendBaseUrl}/reset-password?userId={userId}&token={encodedToken}";
 
-            await emailService.SendPasswordResetEmailAsync(dto.Email, resetLink);
-        }
+        await emailService.SendPasswordResetEmailAsync(dto.Email, resetLink);
 
         // Always return success to avoid leaking user info
         return TypedResults.Ok((object)new { message = "If the email exists, a password reset link has been sent." });

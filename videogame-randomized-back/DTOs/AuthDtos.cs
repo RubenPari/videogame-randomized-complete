@@ -1,13 +1,13 @@
 namespace videogame_randomized_back.DTOs;
 
-public record RegisterDto(string Email, string Password, string ConfirmPassword);
+public abstract record RegisterDto(string Email, string Password, string ConfirmPassword);
 
-public record LoginDto(string Email, string Password);
+public abstract record LoginDto(string Email, string Password);
 
-public record ForgotPasswordDto(string Email);
+public abstract record ForgotPasswordDto(string Email);
 
-public record ResetPasswordDto(string UserId, string Token, string NewPassword);
+public abstract record ResetPasswordDto(string UserId, string Token, string NewPassword);
 
-public record ChangePasswordDto(string CurrentPassword, string NewPassword);
+public abstract record ChangePasswordDto(string CurrentPassword, string NewPassword);
 
-public record AuthResponseDto(string Token, string Email);
+public record AuthResponseDto;
