@@ -4,3 +4,4 @@ videogame-randomized-back/obj/
 .vscode/
 videogame-randomized/.env.production
 .env
+.idea/
