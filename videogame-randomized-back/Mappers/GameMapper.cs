@@ -7,23 +7,34 @@ namespace videogame_randomized_back.Mappers;
 [Mapper]
 public partial class GameMapper
 {
-    // Game -> GameDto
+    [MapperIgnoreSource(nameof(Game.User))]
     public partial GameDto GameToDto(Game game);
 
-    // List<Game> -> List<GameDto>
-    public partial List<GameDto> GamesToDtos(List<Game> games);
+    public partial List<GameDto> GamesToDtos(IEnumerable<Game> games);
 
-    // CreateGameDto -> Game
+    [MapperIgnoreTarget(nameof(Game.PersonalRating))]
+    [MapperIgnoreTarget(nameof(Game.Note))]
+    [MapperIgnoreTarget(nameof(Game.SavedAt))]
+    [MapperIgnoreTarget(nameof(Game.UserId))]
+    [MapperIgnoreTarget(nameof(Game.User))]
     public partial Game CreateDtoToGame(CreateGameDto dto);
 
-    // Genre mapping
-    public partial GenreDto GenreToDto(Genre genre);
-    public partial Genre DtoToGenre(GenreDto dto);
-    
-    // Platform mapping
-    public partial PlatformDto PlatformToDto(Platform platform);
-    public partial Platform DtoToPlatform(PlatformDto dto);
+    [MapperIgnoreTarget(nameof(Game.SavedAt))]
+    [MapperIgnoreTarget(nameof(Game.UserId))]
+    [MapperIgnoreTarget(nameof(Game.User))]
+    public partial void UpdateGameDtoToGame(UpdateGameDto dto, Game game);
 
-    // StatisticsDto -> GameStatsDto
+    [MapperIgnoreSource(nameof(Genre.Games))]
+    private partial GenreDto GenreToDto(Genre genre);
+
+    [MapperIgnoreSource(nameof(Platform.Games))]
+    private partial PlatformDto PlatformToDto(Platform platform);
+
+    [MapperIgnoreTarget(nameof(Genre.Games))]
+    private partial Genre DtoToGenre(GenreDto dto);
+
+    [MapperIgnoreTarget(nameof(Platform.Games))]
+    private partial Platform DtoToPlatform(PlatformDto dto);
+    
     public partial GameStatsDto StatsToDto(StatisticsDto stats);
 }

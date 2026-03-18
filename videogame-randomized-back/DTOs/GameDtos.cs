@@ -1,8 +1,22 @@
 namespace videogame_randomized_back.DTOs;
 
-public record GameDto;
+public record GameDto(
+    int Id,
+    string Name,
+    string? BackgroundImage,
+    double Rating,
+    string? Released,
+    List<GenreDto>? Genres,
+    List<PlatformDto>? Platforms,
+    int? Metacritic,
+    string? DescriptionRaw,
+    int? PersonalRating,
+    string? Note,
+    DateTime SavedAt,
+    string UserId
+);
 
-public abstract record CreateGameDto(
+public record CreateGameDto(
     int Id,
     string Name,
     string? BackgroundImage,
@@ -14,7 +28,16 @@ public abstract record CreateGameDto(
     string? DescriptionRaw
 );
 
-public abstract record UpdateGameDto(
+public record UpdateGameDto(
+    int? Id,
+    string? Name,
+    string? BackgroundImage,
+    double? Rating,
+    string? Released,
+    List<GenreDto>? Genres,
+    List<PlatformDto>? Platforms,
+    int? Metacritic,
+    string? DescriptionRaw,
     int? PersonalRating,
     string? Note
 );
@@ -31,4 +54,9 @@ public record PlatformDto(
     string? Slug
 );
 
-public record GameStatsDto;
+public record GameStatsDto(
+    int TotalGames,
+    double AverageRating,
+    Dictionary<string, int> GenreCount,
+    Dictionary<string, int> PlatformCount
+);
