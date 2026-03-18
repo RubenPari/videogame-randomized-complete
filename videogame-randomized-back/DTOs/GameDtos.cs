@@ -17,7 +17,7 @@ public record GameDto
     public string UserId { get; init; } = string.Empty;
 }
 
-public abstract record CreateGameDto
+public record CreateGameDto
 {
     public int Id { get; init; }
     public string Name { get; init; } = string.Empty;
@@ -30,7 +30,7 @@ public abstract record CreateGameDto
     public string? DescriptionRaw { get; init; }
 }
 
-public abstract record UpdateGameDto
+public record UpdateGameDto
 {
     public int? Id { get; init; }
     public string? Name { get; init; }

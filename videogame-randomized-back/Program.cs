@@ -1,5 +1,6 @@
 using System.Text;
 using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +8,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text.Json.Serialization;
 using videogame_randomized_back.Data;
 using videogame_randomized_back.DTOs;
-using videogame_randomized_back.Endpoints;
 using videogame_randomized_back.Mappers;
 using videogame_randomized_back.Models;
 using videogame_randomized_back.Services;
@@ -76,16 +76,14 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<GameMapper>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateGameDto>();
+builder.Services.AddFluentValidationAutoValidation();
 
-// Configure JSON options for Minimal APIs
-builder.Services.ConfigureHttpJsonOptions(options =>
-{
-    options.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
-});
-
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 builder.Services.AddCors(options =>
 {
@@ -117,9 +115,7 @@ if (app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapAuthEndpoints();
-app.MapSavedGamesEndpoints();
-app.MapDiscoveryLogEndpoints();
+app.MapControllers();
 app.MapGet("/", () => "Hello World!");
 
 app.Run();
