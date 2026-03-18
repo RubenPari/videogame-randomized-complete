@@ -20,10 +20,10 @@ public class Game
     public string? Released { get; set; }
 
     [JsonPropertyName("genres")]
-    public List<Genre> Genres { get; set; } = new();
+    public List<Genre> Genres { get; set; } = [];
 
     [JsonPropertyName("platforms")]
-    public List<Platform> Platforms { get; set; } = new();
+    public List<Platform> Platforms { get; set; } = [];
 
     [JsonPropertyName("metacritic")]
     public int? Metacritic { get; set; }

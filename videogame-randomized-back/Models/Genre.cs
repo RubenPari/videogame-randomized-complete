@@ -13,5 +13,5 @@ public class Genre
     [JsonPropertyName("slug")]
     public string? Slug { get; set; }
     
-    public List<Game> Games { get; set; } = new();
+    public List<Game> Games { get; set; } = [];
 }
