@@ -93,6 +93,12 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
+// Add Swagger for API documentation
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "VideoGame Randomizer API", Version = "v1" });
+});
+
 builder.Services.AddCors(options =>
 {
     var corsSettings = builder.Configuration.GetSection("CorsSettings").Get<CorsSettings>();
