@@ -17,7 +17,6 @@ export function useGameDiscovery() {
   const gameHistory = ref([])       // Current session history
   const pastHistory = ref([])        // Loaded from server (previous sessions)
   const totalGamesCount = ref(0)
-  const isSavingLog = ref(false)
 
   // All excluded IDs = current session + past sessions
   const allExcludedIds = computed(() => {
@@ -46,31 +45,6 @@ export function useGameDiscovery() {
     } catch (err) {
       console.error('Failed to load discovery log:', err)
       pastHistory.value = []
-    }
-  }
-
-  /**
-   * Save current session's discovered games to the server
-   */
-  const saveSessionLog = async () => {
-    if (gameHistory.value.length === 0) return { saved: 0 }
-
-    isSavingLog.value = true
-    try {
-      const response = await httpClient.post('/discovery-log', gameHistory.value)
-      // Merge saved entries into pastHistory
-      const savedEntries = gameHistory.value.filter(
-        g => !pastHistory.value.some(p => p.id === g.id)
-      )
-      pastHistory.value = [...pastHistory.value, ...savedEntries]
-      // Clear current session since they're now persisted
-      gameHistory.value = []
-      return response.data
-    } catch (err) {
-      console.error('Failed to save session log:', err)
-      throw err
-    } finally {
-      isSavingLog.value = false
     }
   }
 
@@ -135,8 +109,15 @@ export function useGameDiscovery() {
       // Random selection
       const selected = filtered[Math.floor(Math.random() * filtered.length)]
 
-      // Update history
-      gameHistory.value.push({ id: selected.id, name: selected.name })
+      // Update history and auto-save to server
+      const entry = { id: selected.id, name: selected.name }
+      gameHistory.value.push(entry)
+      if (!pastHistory.value.some(p => p.id === entry.id)) {
+        pastHistory.value = [...pastHistory.value, entry]
+      }
+      httpClient.post('/discovery-log', [entry]).catch(err => {
+        console.error('Failed to auto-save discovery log entry:', err)
+      })
 
       // Fetch details & translate
       await fetchGameDetails(selected.id)
@@ -184,11 +165,9 @@ export function useGameDiscovery() {
     pastHistory,
     totalGamesCount,
     filters,
-    isSavingLog,
     generateGame,
     clearHistory,
     loadPastHistory,
-    saveSessionLog,
     clearPastHistory
   }
 }
