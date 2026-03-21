@@ -15,8 +15,6 @@
     "logged_out": "Sesión cerrada exitosamente",
     "password_changed": "Contraseña cambiada exitosamente",
     "password_change_error": "Error al cambiar la contraseña",
-    "session_saved": "¡Sesión guardada! {count} nuevos juegos registrados.",
-    "session_save_error": "Error al guardar la sesión",
     "history_cleared": "Historial de descubrimiento borrado",
     "history_clear_error": "Error al borrar el historial"
   },
@@ -72,7 +70,6 @@
   },
   "history": {
     "session_log": "Registro de Sesión",
-    "save": "Guardar",
     "saving": "Guardando...",
     "purge": "Purgar",
     "excluded_games": "Juegos Excluidos (Sesiones Anteriores)",

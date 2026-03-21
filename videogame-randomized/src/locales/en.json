@@ -15,8 +15,6 @@
     "logged_out": "Logged out successfully",
     "password_changed": "Password changed successfully",
     "password_change_error": "Failed to change password",
-    "session_saved": "Session saved! {count} new games logged.",
-    "session_save_error": "Failed to save session log",
     "history_cleared": "Discovery log cleared",
     "history_clear_error": "Failed to clear discovery log"
   },
@@ -72,7 +70,6 @@
   },
   "history": {
     "session_log": "Session Log",
-    "save": "Save",
     "saving": "Saving...",
     "purge": "Purge",
     "excluded_games": "Excluded Games (Past Sessions)",

@@ -15,8 +15,6 @@
     "logged_out": "Disconnessione completata",
     "password_changed": "Password modificata con successo",
     "password_change_error": "Errore nella modifica della password",
-    "session_saved": "Sessione salvata! {count} nuovi giochi registrati.",
-    "session_save_error": "Errore nel salvataggio della sessione",
     "history_cleared": "Cronologia scoperta cancellata",
     "history_clear_error": "Errore nella cancellazione della cronologia"
   },
@@ -72,7 +70,6 @@
   },
   "history": {
     "session_log": "Log Sessione",
-    "save": "Salva",
     "saving": "Salvataggio...",
     "purge": "Cancella",
     "excluded_games": "Giochi Esclusi (Sessioni Precedenti)",
