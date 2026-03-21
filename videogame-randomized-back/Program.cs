@@ -6,17 +6,36 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.Json.Serialization;
+using DotNetEnv;
 using videogame_randomized_back.Data;
 using videogame_randomized_back.DTOs;
 using videogame_randomized_back.Mappers;
 using videogame_randomized_back.Models;
 using videogame_randomized_back.Services;
 
+Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add DbContext with MySQL
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Server=localhost;Database=videogames;Uid=root;Pwd=password;";
+var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
+var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "videogames";
+var dbUser = Environment.GetEnvironmentVariable("DB_USER") ?? "root";
+var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "password";
+var connectionString = $"Server={dbHost};Database={dbName};Uid={dbUser};Pwd={dbPassword};";
+
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "fallback-secret-key-min-32-characters-long!";
+var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "videogame-randomizer";
+var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "videogame-randomizer-frontend";
+var jwtExpirationMinutes = int.Parse(Environment.GetEnvironmentVariable("JWT_EXPIRATION_MINUTES") ?? "1440");
+
+var emailFromEmail = Environment.GetEnvironmentVariable("EMAIL_FROM_EMAIL") ?? "hello@example.com";
+var emailFromName = Environment.GetEnvironmentVariable("EMAIL_FROM_NAME") ?? "VideoGame Randomizer";
+var emailApiToken = Environment.GetEnvironmentVariable("EMAIL_API_TOKEN") ?? "";
+
+var corsOriginsEnv = Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS") ?? "";
+var allowedOrigins = string.IsNullOrWhiteSpace(corsOriginsEnv) 
+    ? Array.Empty<string>() 
+    : corsOriginsEnv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
@@ -40,12 +59,22 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 // Configure JWT
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-builder.Services.Configure<JwtSettings>(jwtSettings);
+var jwtSettings = new JwtSettings
+{
+    Secret = jwtSecret,
+    Issuer = jwtIssuer,
+    Audience = jwtAudience,
+    ExpirationMinutes = jwtExpirationMinutes
+};
+builder.Services.Configure<JwtSettings>(options =>
+{
+    options.Secret = jwtSecret;
+    options.Issuer = jwtIssuer;
+    options.Audience = jwtAudience;
+    options.ExpirationMinutes = jwtExpirationMinutes;
+});
 
-var secret = jwtSettings.Get<JwtSettings>()?.Secret ?? "super-secret-key-change-in-production-min-32-chars!";
-
-if (secret.Length < 32)
+if (jwtSecret.Length < 32)
 {
     throw new InvalidOperationException("JWT secret must be at least 32 characters long for production security.");
 }
@@ -63,9 +92,9 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret))
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
     };
 });
 
@@ -75,8 +104,12 @@ builder.Services.AddAuthorization();
 builder.Services.AddHttpClient();
 
 // Configure Email settings
-var emailSettings = builder.Configuration.GetSection("MailtrapSettings");
-builder.Services.Configure<EmailSettings>(emailSettings);
+builder.Services.Configure<EmailSettings>(options =>
+{
+    options.FromEmail = emailFromEmail;
+    options.FromName = emailFromName;
+    options.ApiToken = emailApiToken;
+});
 
 // Add services to the container
 builder.Services.AddScoped<GamesService>();
@@ -101,9 +134,6 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddCors(options =>
 {
-    var corsSettings = builder.Configuration.GetSection("CorsSettings").Get<CorsSettings>();
-    var allowedOrigins = corsSettings?.AllowedOrigins ?? [];
-    
     options.AddDefaultPolicy(policy =>
     {
         if (allowedOrigins.Length > 0)
