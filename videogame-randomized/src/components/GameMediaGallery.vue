@@ -20,8 +20,8 @@ const activeScreenshotIndex = ref(0)
     <!-- RAWG Trailers -->
     <div v-if="videos.length > 0" class="flex flex-col gap-3">
       <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center justify-between">
-        <span>Video Trailer</span>
-        <span class="text-zinc-600">{{ videos.length > 1 ? videos.length + ' Videos' : '' }}</span>
+        <span>{{ $t('gallery.video_trailer') }}</span>
+        <span class="text-zinc-600">{{ videos.length > 1 ? videos.length + ' ' + $t('gallery.videos') : '' }}</span>
       </h3>
       <div class="bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden aspect-video relative flex-shrink-0">
         <video v-if="videos[0]?.data?.max || videos[0]?.data?.['480']"
@@ -43,7 +43,7 @@ const activeScreenshotIndex = ref(0)
           <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z"/>
           <path d="M9.545 15.568V8.432L15.818 12l-6.273 3.568z" fill="white"/>
         </svg>
-        <span>YouTube Trailer</span>
+        <span>{{ $t('gallery.youtube_trailer') }}</span>
       </h3>
       <div class="bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden aspect-video relative flex-shrink-0">
         <iframe
@@ -58,7 +58,7 @@ const activeScreenshotIndex = ref(0)
 
     <!-- Screenshots -->
     <div v-if="screenshots.length > 0" class="flex flex-col gap-3">
-      <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Image Gallery</h3>
+      <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{{ $t('gallery.image_gallery') }}</h3>
 
       <div class="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden min-h-64 relative group">
          <img :src="screenshots[activeScreenshotIndex]?.image" class="w-full h-full object-contain absolute inset-0" />
