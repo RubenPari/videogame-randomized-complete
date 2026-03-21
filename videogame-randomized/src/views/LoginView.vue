@@ -1,8 +1,11 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useToastStore } from '@/stores/useToastStore'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -21,7 +24,7 @@ const handleLogin = async () => {
     toastStore.showToast('Welcome back!', 'success')
     router.push('/')
   } catch (err) {
-    error.value = err.response?.data?.error || 'Login failed. Please try again.'
+    error.value = err.response?.data?.error || t('error.generic')
   } finally {
     isLoading.value = false
   }
@@ -43,7 +46,7 @@ const handleLogin = async () => {
             Random<span class="text-cyan-400">Generator</span>
           </h1>
         </div>
-        <p class="text-zinc-500 text-sm">Sign in to your account</p>
+        <p class="text-zinc-500 text-sm">{{ $t('auth.login_title') }}</p>
       </div>
 
       <!-- Login Form -->
@@ -97,7 +100,7 @@ const handleLogin = async () => {
             to="/forgot-password"
             class="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
           >
-            Forgot password?
+            {{ $t('auth.forgot_password') }}
           </router-link>
         </div>
 
@@ -107,22 +110,22 @@ const handleLogin = async () => {
           :disabled="isLoading"
           class="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-zinc-950 font-bold rounded-xl uppercase tracking-wider text-sm transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
-          <span v-if="!isLoading">Sign In</span>
+          <span v-if="!isLoading">{{ $t('auth.sign_in') }}</span>
           <span v-else class="flex items-center justify-center gap-2">
             <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            Signing in...
+            {{ $t('auth.signing_in') }}
           </span>
         </button>
       </form>
 
       <!-- Register Link -->
       <p class="text-center mt-6 text-zinc-500 text-sm">
-        Don't have an account?
+        {{ $t('auth.dont_have_account') }}
         <router-link to="/register" class="text-fuchsia-400 hover:text-fuchsia-300 font-semibold transition-colors">
-          Create one
+          {{ $t('auth.create_one') }}
         </router-link>
       </p>
     </div>

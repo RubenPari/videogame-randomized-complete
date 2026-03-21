@@ -1,7 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import authService from '@/services/auth'
+
+const { t } = useI18n()
 
 const route = useRoute()
 
@@ -19,7 +22,7 @@ onMounted(() => {
   token.value = route.query.token || ''
 
   if (!userId.value || !token.value) {
-    error.value = 'Invalid reset link. Please request a new one.'
+    error.value = t('auth.invalid_reset_link')
   }
 })
 
@@ -27,7 +30,7 @@ const handleSubmit = async () => {
   error.value = ''
 
   if (newPassword.value !== confirmPassword.value) {
-    error.value = 'Passwords do not match.'
+    error.value = t('auth.passwords_dont_match')
     return
   }
 
@@ -36,7 +39,7 @@ const handleSubmit = async () => {
     await authService.resetPassword(userId.value, token.value, newPassword.value)
     success.value = true
   } catch (err) {
-    error.value = err.response?.data?.error || 'Password reset failed. The link may have expired.'
+    error.value = err.response?.data?.error || t('auth.reset_failed')
   } finally {
     isLoading.value = false
   }
@@ -58,7 +61,7 @@ const handleSubmit = async () => {
             Random<span class="text-cyan-400">Generator</span>
           </h1>
         </div>
-        <p class="text-zinc-500 text-sm">Set a new password</p>
+        <p class="text-zinc-500 text-sm">{{ $t('auth.reset_password_title') }}</p>
       </div>
 
       <!-- Success State -->
@@ -71,13 +74,13 @@ const handleSubmit = async () => {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2 class="text-xl font-bold text-white">Password Reset!</h2>
-        <p class="text-zinc-400 text-sm">Your password has been successfully reset.</p>
+        <h2 class="text-xl font-bold text-white">{{ $t('auth.password_reset_success') }}</h2>
+        <p class="text-zinc-400 text-sm">{{ $t('auth.password_reset_desc') }}</p>
         <router-link
           to="/login"
           class="inline-block mt-4 px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-cyan-600 text-zinc-950 font-bold rounded-xl transition-all text-sm hover:from-cyan-400 hover:to-cyan-500"
         >
-          Sign In Now
+          {{ $t('auth.sign_in_now') }}
         </router-link>
       </div>
 
@@ -97,7 +100,7 @@ const handleSubmit = async () => {
         <!-- New Password -->
         <div class="space-y-2">
           <label for="reset-password" class="block text-sm font-semibold text-zinc-400 uppercase tracking-wider">
-            New Password
+            {{ $t('auth.new_password') }}
           </label>
           <input
             id="reset-password"
@@ -105,7 +108,7 @@ const handleSubmit = async () => {
             type="password"
             required
             autocomplete="new-password"
-            placeholder="Min. 6 characters"
+            :placeholder="$t('auth.min_characters')"
             class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/50 focus:border-fuchsia-500 transition-all"
           />
         </div>
@@ -113,7 +116,7 @@ const handleSubmit = async () => {
         <!-- Confirm Password -->
         <div class="space-y-2">
           <label for="reset-confirm" class="block text-sm font-semibold text-zinc-400 uppercase tracking-wider">
-            Confirm Password
+            {{ $t('auth.confirm_password') }}
           </label>
           <input
             id="reset-confirm"
@@ -121,7 +124,7 @@ const handleSubmit = async () => {
             type="password"
             required
             autocomplete="new-password"
-            placeholder="Repeat password"
+            :placeholder="$t('auth.repeat_password')"
             class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/50 focus:border-fuchsia-500 transition-all"
           />
         </div>
@@ -132,13 +135,13 @@ const handleSubmit = async () => {
           :disabled="isLoading || (!userId && !token)"
           class="w-full py-3.5 bg-gradient-to-r from-fuchsia-500 to-fuchsia-600 hover:from-fuchsia-400 hover:to-fuchsia-500 text-zinc-950 font-bold rounded-xl uppercase tracking-wider text-sm transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
-          <span v-if="!isLoading">Reset Password</span>
+          <span v-if="!isLoading">{{ $t('auth.reset_password') }}</span>
           <span v-else class="flex items-center justify-center gap-2">
             <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            Resetting...
+            {{ $t('auth.resetting') }}
           </span>
         </button>
       </form>

@@ -1,9 +1,9 @@
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import authService from '@/services/auth'
-import { useToastStore } from '@/stores/useToastStore'
 
-const toastStore = useToastStore()
+const { t } = useI18n()
 
 const email = ref('')
 const isLoading = ref(false)
@@ -17,7 +17,7 @@ const handleSubmit = async () => {
     await authService.forgotPassword(email.value)
     success.value = true
   } catch (err) {
-    error.value = err.response?.data?.error || 'Something went wrong. Please try again.'
+    error.value = err.response?.data?.error || t('error.generic')
   } finally {
     isLoading.value = false
   }
@@ -39,7 +39,7 @@ const handleSubmit = async () => {
             Random<span class="text-cyan-400">Generator</span>
           </h1>
         </div>
-        <p class="text-zinc-500 text-sm">Reset your password</p>
+        <p class="text-zinc-500 text-sm">{{ $t('auth.forgot_password_title') }}</p>
       </div>
 
       <!-- Success State -->
@@ -52,16 +52,15 @@ const handleSubmit = async () => {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
         </div>
-        <h2 class="text-xl font-bold text-white">Check Your Email</h2>
+        <h2 class="text-xl font-bold text-white">{{ $t('auth.check_email') }}</h2>
         <p class="text-zinc-400 text-sm">
-          If an account exists for <span class="text-fuchsia-400 font-semibold">{{ email }}</span>,
-          we've sent a password reset link.
+          {{ $t('auth.reset_link_sent', { email }) }}
         </p>
         <router-link
           to="/login"
           class="inline-block mt-4 px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold rounded-xl transition-all text-sm"
         >
-          Back to Login
+          {{ $t('auth.back_to_login') }}
         </router-link>
       </div>
 
@@ -79,13 +78,13 @@ const handleSubmit = async () => {
         </div>
 
         <p class="text-zinc-400 text-sm">
-          Enter your email address and we'll send you a link to reset your password.
+          {{ $t('auth.forgot_password_desc') }}
         </p>
 
         <!-- Email -->
         <div class="space-y-2">
           <label for="forgot-email" class="block text-sm font-semibold text-zinc-400 uppercase tracking-wider">
-            Email
+            {{ $t('auth.email') }}
           </label>
           <input
             id="forgot-email"
@@ -104,22 +103,22 @@ const handleSubmit = async () => {
           :disabled="isLoading"
           class="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-zinc-950 font-bold rounded-xl uppercase tracking-wider text-sm transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
-          <span v-if="!isLoading">Send Reset Link</span>
+          <span v-if="!isLoading">{{ $t('auth.send_reset_link') }}</span>
           <span v-else class="flex items-center justify-center gap-2">
             <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            Sending...
+            {{ $t('auth.sending') }}
           </span>
         </button>
       </form>
 
       <!-- Back to Login -->
       <p class="text-center mt-6 text-zinc-500 text-sm">
-        Remember your password?
+        {{ $t('auth.remember_password') }}
         <router-link to="/login" class="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors">
-          Sign in
+          {{ $t('auth.sign_in_link') }}
         </router-link>
       </p>
     </div>

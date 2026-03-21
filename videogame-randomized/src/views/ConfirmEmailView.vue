@@ -1,7 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import authService from '@/services/auth'
+
+const { t } = useI18n()
 
 const route = useRoute()
 
@@ -14,7 +17,7 @@ onMounted(async () => {
   const token = route.query.token
 
   if (!userId || !token) {
-    error.value = 'Invalid confirmation link.'
+    error.value = t('auth.invalid_confirmation')
     isLoading.value = false
     return
   }
@@ -23,7 +26,7 @@ onMounted(async () => {
     await authService.confirmEmail(userId, token)
     success.value = true
   } catch (err) {
-    error.value = err.response?.data?.error || 'Email confirmation failed. The link may have expired.'
+    error.value = err.response?.data?.error || t('auth.confirmation_failed_desc')
   } finally {
     isLoading.value = false
   }
@@ -56,7 +59,7 @@ onMounted(async () => {
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
-        <p class="text-zinc-400">Confirming your email...</p>
+        <p class="text-zinc-400">{{ $t('auth.confirmation_sent', { email: '' }) }}</p>
       </div>
 
       <!-- Success -->
@@ -69,13 +72,13 @@ onMounted(async () => {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2 class="text-xl font-bold text-white">Email Confirmed!</h2>
-        <p class="text-zinc-400 text-sm">Your email has been verified. You can now sign in.</p>
+        <h2 class="text-xl font-bold text-white">{{ $t('auth.email_confirmed') }}</h2>
+        <p class="text-zinc-400 text-sm">{{ $t('auth.email_confirmed_desc') }}</p>
         <router-link
           to="/login"
           class="inline-block mt-4 px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-cyan-600 text-zinc-950 font-bold rounded-xl transition-all text-sm hover:from-cyan-400 hover:to-cyan-500"
         >
-          Sign In
+          {{ $t('auth.sign_in') }}
         </router-link>
       </div>
 
@@ -89,13 +92,13 @@ onMounted(async () => {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </div>
-        <h2 class="text-xl font-bold text-white">Confirmation Failed</h2>
+        <h2 class="text-xl font-bold text-white">{{ $t('auth.confirmation_failed') }}</h2>
         <p class="text-red-400 text-sm">{{ error }}</p>
         <router-link
           to="/login"
           class="inline-block mt-4 px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold rounded-xl transition-all text-sm"
         >
-          Back to Login
+          {{ $t('auth.back_to_login') }}
         </router-link>
       </div>
     </div>

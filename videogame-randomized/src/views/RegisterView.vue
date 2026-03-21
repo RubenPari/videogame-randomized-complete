@@ -1,7 +1,10 @@
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useToastStore } from '@/stores/useToastStore'
+
+const { t } = useI18n()
 
 const authStore = useAuthStore()
 const toastStore = useToastStore()
@@ -25,7 +28,7 @@ const handleRegister = async () => {
     if (Array.isArray(errors)) {
       error.value = errors.join(', ')
     } else {
-      error.value = err.response?.data?.error || 'Registration failed. Please try again.'
+      error.value = err.response?.data?.error || t('error.generic')
     }
   } finally {
     isLoading.value = false
@@ -48,7 +51,7 @@ const handleRegister = async () => {
             Random<span class="text-cyan-400">Generator</span>
           </h1>
         </div>
-        <p class="text-zinc-500 text-sm">Create a new account</p>
+        <p class="text-zinc-500 text-sm">{{ $t('auth.register_title') }}</p>
       </div>
 
       <!-- Success State -->
@@ -61,16 +64,15 @@ const handleRegister = async () => {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
         </div>
-        <h2 class="text-xl font-bold text-white">Check Your Email</h2>
+        <h2 class="text-xl font-bold text-white">{{ $t('auth.check_email') }}</h2>
         <p class="text-zinc-400 text-sm">
-          We've sent a confirmation link to <span class="text-cyan-400 font-semibold">{{ email }}</span>.
-          Please click the link to activate your account.
+          {{ $t('auth.confirmation_sent', { email }) }}
         </p>
         <router-link
           to="/login"
           class="inline-block mt-4 px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold rounded-xl transition-all text-sm"
         >
-          Back to Login
+          {{ $t('auth.back_to_login') }}
         </router-link>
       </div>
 
@@ -142,22 +144,22 @@ const handleRegister = async () => {
           :disabled="isLoading"
           class="w-full py-3.5 bg-gradient-to-r from-fuchsia-500 to-fuchsia-600 hover:from-fuchsia-400 hover:to-fuchsia-500 text-zinc-950 font-bold rounded-xl uppercase tracking-wider text-sm transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
-          <span v-if="!isLoading">Create Account</span>
+          <span v-if="!isLoading">{{ $t('auth.create_account') }}</span>
           <span v-else class="flex items-center justify-center gap-2">
             <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            Creating account...
+            {{ $t('auth.creating_account') }}
           </span>
         </button>
       </form>
 
       <!-- Login Link -->
       <p class="text-center mt-6 text-zinc-500 text-sm">
-        Already have an account?
+        {{ $t('auth.already_have_account') }}
         <router-link to="/login" class="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors">
-          Sign in
+          {{ $t('auth.sign_in_link') }}
         </router-link>
       </p>
     </div>
