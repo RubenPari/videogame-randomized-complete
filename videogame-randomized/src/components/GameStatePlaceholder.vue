@@ -7,7 +7,7 @@ defineProps({
 <template>
   <div v-if="isLoading" class="flex-1 flex flex-col items-center justify-center border border-dashed border-zinc-800 rounded-2xl bg-zinc-900/30 p-12">
     <div class="w-16 h-16 border-4 border-zinc-800 border-t-cyan-500 rounded-full animate-spin mb-6"></div>
-    <p class="text-cyan-400 font-mono text-sm uppercase tracking-widest animate-pulse">Initializing Protocol...</p>
+    <p class="text-cyan-400 font-mono text-sm uppercase tracking-widest animate-pulse">{{ $t('placeholder.loading') }}</p>
   </div>
 
   <div v-else class="flex-1 flex flex-col items-center justify-center border border-dashed border-zinc-800 rounded-2xl bg-zinc-900/30 p-12 text-center">
@@ -17,7 +17,7 @@ defineProps({
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
       </svg>
     </div>
-    <h3 class="text-lg font-black text-white mb-2 uppercase tracking-widest">Awaiting Input</h3>
-    <p class="text-zinc-500 text-sm max-w-sm">Configure parameters and engage sequence to discover your next adventure.</p>
+    <h3 class="text-lg font-black text-white mb-2 uppercase tracking-widest">{{ $t('placeholder.awaiting_input') }}</h3>
+    <p class="text-zinc-500 text-sm max-w-sm">{{ $t('placeholder.awaiting_input_desc') }}</p>
   </div>
 </template>
