@@ -1,9 +1,12 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useVaultStore } from '@/stores/useVaultStore'
 import { useToastStore } from '@/stores/useToastStore'
 import api from '@/services/api'
 import GameMediaGallery from './GameMediaGallery.vue'
+
+const { t } = useI18n()
 
 const props = defineProps({
   game: { type: Object, default: null },
@@ -69,7 +72,7 @@ const toggleSaveGame = async () => {
   try {
     const saved = await vault.toggleGame(props.game)
     toastSession.showToast(
-      saved ? 'Game saved to vault' : 'Game removed from vault',
+      saved ? t('game.added_success') : t('game.removed_success'),
       'success'
     )
   } catch {
