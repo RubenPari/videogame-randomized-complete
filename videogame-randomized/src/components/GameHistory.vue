@@ -25,7 +25,7 @@ const pastCount = computed(() => props.pastHistory.length)
           <svg class="w-4 h-4 text-fuchsia-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
-          Session Log
+          {{ $t('history.session_log') }}
         </h3>
         <div class="flex items-center gap-2">
           <!-- Save Session Button -->
@@ -41,12 +41,12 @@ const pastCount = computed(() => props.pastHistory.length)
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            {{ isSavingLog ? 'Saving...' : 'Save' }}
+            {{ isSavingLog ? $t('history.saving') : $t('history.save') }}
           </button>
           <!-- Purge Button -->
           <button @click="onClear"
             class="text-[10px] font-bold text-zinc-600 hover:text-red-400 uppercase tracking-widest transition-colors bg-zinc-950 px-2 py-1.5 rounded border border-zinc-800 hover:border-red-500/50">
-            Purge
+            {{ $t('history.purge') }}
           </button>
         </div>
       </div>
@@ -70,12 +70,12 @@ const pastCount = computed(() => props.pastHistory.length)
           <svg class="w-3.5 h-3.5 text-cyan-500/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
           </svg>
-          Giochi esclusi (sessioni precedenti)
+          {{ $t('history.excluded_games') }}
           <span class="text-cyan-400/60 font-mono">{{ pastCount }}</span>
         </h4>
         <button @click="onClearPast"
           class="text-[10px] font-bold text-zinc-600 hover:text-red-400 uppercase tracking-widest transition-colors px-2 py-1 rounded border border-zinc-800/50 hover:border-red-500/50">
-          Reset
+          {{ $t('history.reset') }}
         </button>
       </div>
       <div class="flex flex-wrap gap-1.5">
@@ -86,7 +86,7 @@ const pastCount = computed(() => props.pastHistory.length)
         </span>
         <span v-if="pastCount > 20"
           class="text-[10px] font-mono px-2 py-0.5 text-zinc-600">
-          +{{ pastCount - 20 }} altri
+          +{{ pastCount - 20 }} {{ $t('history.others') }}
         </span>
       </div>
     </div>
