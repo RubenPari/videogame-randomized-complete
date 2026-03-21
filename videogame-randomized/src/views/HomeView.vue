@@ -1,12 +1,15 @@
 <script setup>
 import { ref, onMounted, defineAsyncComponent } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useVaultStore } from '@/stores/useVaultStore'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useToastStore } from '@/stores/useToastStore'
 import { useGameDiscovery } from '@/composables/useGameDiscovery'
 import apiService from '@/services/api'
 import authService from '@/services/auth'
+
+const { t } = useI18n()
 
 // Components
 import FilterSection from '@/components/FilterSection.vue'
@@ -65,7 +68,7 @@ const toggleUserMenu = () => (showUserMenu.value = !showUserMenu.value)
 
 const handleLogout = () => {
   authStore.logout()
-  toastStore.showToast('Logged out successfully', 'success')
+  toastStore.showToast(t('home.logged_out'), 'success')
   router.push('/login')
 }
 
@@ -83,9 +86,9 @@ const handleChangePassword = async () => {
   try {
     await authService.changePassword(currentPassword.value, newPassword.value)
     showChangePassword.value = false
-    toastStore.showToast('Password changed successfully', 'success')
+    toastStore.showToast(t('home.password_changed'), 'success')
   } catch (err) {
-    changePwdError.value = err.response?.data?.error || 'Failed to change password'
+    changePwdError.value = err.response?.data?.error || t('home.password_change_error')
   } finally {
     changePwdLoading.value = false
   }
@@ -94,18 +97,18 @@ const handleChangePassword = async () => {
 const handleSaveSession = async () => {
   try {
     const result = await discovery.saveSessionLog()
-    toastStore.showToast(`Session saved! ${result.saved} new games logged.`, 'success')
+    toastStore.showToast(t('home.session_saved', { count: result.saved }), 'success')
   } catch {
-    toastStore.showToast('Failed to save session log', 'error')
+    toastStore.showToast(t('home.session_save_error'), 'error')
   }
 }
 
 const handleClearPastHistory = async () => {
   try {
     await discovery.clearPastHistory()
-    toastStore.showToast('Discovery log cleared', 'success')
+    toastStore.showToast(t('home.history_cleared'), 'success')
   } catch {
-    toastStore.showToast('Failed to clear discovery log', 'error')
+    toastStore.showToast(t('home.history_clear_error'), 'error')
   }
 }
 </script>
@@ -156,7 +159,7 @@ const handleClearPastHistory = async () => {
             <div v-if="showUserMenu"
               class="absolute right-0 mt-2 w-56 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl overflow-hidden z-50">
               <div class="px-4 py-3 border-b border-zinc-800">
-                <p class="text-xs text-zinc-500 uppercase tracking-wider">Signed in as</p>
+                <p class="text-xs text-zinc-500 uppercase tracking-wider">{{ $t('home.signed_in_as') }}</p>
                 <p class="text-sm text-white font-semibold truncate">{{ authStore.email }}</p>
               </div>
               <button @click="openChangePassword"
@@ -164,14 +167,14 @@ const handleClearPastHistory = async () => {
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                 </svg>
-                Change Password
+                {{ $t('home.change_password') }}
               </button>
               <button @click="handleLogout"
                 class="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-zinc-800 hover:text-red-300 transition-colors flex items-center gap-2 border-t border-zinc-800">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                Sign Out
+                {{ $t('home.sign_out') }}
               </button>
             </div>
           </div>
@@ -229,7 +232,7 @@ const handleClearPastHistory = async () => {
 
         <!-- Error Reporting -->
         <div v-if="discovery.error.value" class="bg-red-500/10 border-l-2 border-red-500 text-red-400 p-4 rounded-r-xl text-sm font-mono animate-fade-in">
-          <p class="font-bold uppercase tracking-wider mb-1">System Error</p>
+          <p class="font-bold uppercase tracking-wider mb-1">{{ $t('error.system_error') }}</p>
           <p>{{ discovery.error.value }}</p>
         </div>
       </div>
@@ -246,7 +249,7 @@ const handleClearPastHistory = async () => {
       <div v-if="showChangePassword" class="fixed inset-0 z-[100] flex items-center justify-center">
         <div @click="showChangePassword = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
         <div class="relative bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-sm mx-4 space-y-5">
-          <h3 class="text-lg font-bold text-white">Change Password</h3>
+          <h3 class="text-lg font-bold text-white">{{ $t('home.change_password') }}</h3>
 
           <div v-if="changePwdError"
             class="bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-2 rounded-lg text-sm">
@@ -254,26 +257,26 @@ const handleClearPastHistory = async () => {
           </div>
 
           <div class="space-y-2">
-            <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">Current Password</label>
+            <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">{{ $t('auth.current_password') }}</label>
             <input v-model="currentPassword" type="password" autocomplete="current-password"
               class="w-full px-3 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-sm" />
           </div>
 
           <div class="space-y-2">
-            <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">New Password</label>
-            <input v-model="newPassword" type="password" autocomplete="new-password" placeholder="Min. 6 characters"
+            <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">{{ $t('auth.new_password') }}</label>
+            <input v-model="newPassword" type="password" autocomplete="new-password" :placeholder="$t('auth.min_characters')"
               class="w-full px-3 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-sm" />
           </div>
 
           <div class="flex gap-3">
             <button @click="showChangePassword = false"
               class="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-lg text-sm transition-all">
-              Cancel
+              {{ $t('auth.back_to_login').replace('Back to ', '') }}
             </button>
             <button @click="handleChangePassword" :disabled="changePwdLoading"
               class="flex-1 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-bold rounded-lg text-sm transition-all disabled:opacity-50">
-              <span v-if="!changePwdLoading">Update</span>
-              <span v-else>Saving...</span>
+              <span v-if="!changePwdLoading">{{ $t('home.change_password') }}</span>
+              <span v-else>{{ $t('history.saving') }}</span>
             </button>
           </div>
         </div>
