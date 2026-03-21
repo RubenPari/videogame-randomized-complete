@@ -3,14 +3,12 @@ import { computed } from 'vue'
 
 const props = defineProps({
   gameHistory: { type: Array, default: () => [] },
-  pastHistory: { type: Array, default: () => [] },
-  isSavingLog: { type: Boolean, default: false }
+  pastHistory: { type: Array, default: () => [] }
 })
 
-const emit = defineEmits(['clear-history', 'save-session', 'clear-past-history'])
+const emit = defineEmits(['clear-history', 'clear-past-history'])
 
 const onClear = () => emit('clear-history')
-const onSave = () => emit('save-session')
 const onClearPast = () => emit('clear-past-history')
 
 const pastCount = computed(() => props.pastHistory.length)
@@ -28,21 +26,6 @@ const pastCount = computed(() => props.pastHistory.length)
           {{ $t('history.session_log') }}
         </h3>
         <div class="flex items-center gap-2">
-          <!-- Save Session Button -->
-          <button @click="onSave" :disabled="isSavingLog"
-            class="text-[10px] font-bold uppercase tracking-widest transition-all px-3 py-1.5 rounded border flex items-center gap-1.5"
-            :class="isSavingLog
-              ? 'text-zinc-600 bg-zinc-950 border-zinc-800 cursor-not-allowed'
-              : 'text-cyan-400 bg-zinc-950 border-cyan-500/30 hover:border-cyan-500 hover:bg-cyan-500/10'">
-            <svg v-if="!isSavingLog" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            <svg v-else class="w-3 h-3 animate-spin" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-            {{ isSavingLog ? $t('history.saving') : $t('history.save') }}
-          </button>
           <!-- Purge Button -->
           <button @click="onClear"
             class="text-[10px] font-bold text-zinc-600 hover:text-red-400 uppercase tracking-widest transition-colors bg-zinc-950 px-2 py-1.5 rounded border border-zinc-800 hover:border-red-500/50">

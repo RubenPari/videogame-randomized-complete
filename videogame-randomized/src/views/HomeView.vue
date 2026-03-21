@@ -94,15 +94,6 @@ const handleChangePassword = async () => {
   }
 }
 
-const handleSaveSession = async () => {
-  try {
-    const result = await discovery.saveSessionLog()
-    toastStore.showToast(t('home.session_saved', { count: result.saved }), 'success')
-  } catch {
-    toastStore.showToast(t('home.session_save_error'), 'error')
-  }
-}
-
 const handleClearPastHistory = async () => {
   try {
     await discovery.clearPastHistory()
@@ -224,9 +215,7 @@ const handleClearPastHistory = async () => {
         <GameHistory
           :gameHistory="discovery.gameHistory.value"
           :pastHistory="discovery.pastHistory.value"
-          :isSavingLog="discovery.isSavingLog.value"
           @clear-history="discovery.clearHistory"
-          @save-session="handleSaveSession"
           @clear-past-history="handleClearPastHistory"
         />
 
