@@ -115,9 +115,11 @@ export function useGameDiscovery() {
       if (!pastHistory.value.some(p => p.id === entry.id)) {
         pastHistory.value = [...pastHistory.value, entry]
       }
-      httpClient.post('/discovery-log', [entry]).catch(err => {
+      try {
+        await httpClient.post('/discovery-log', [entry])
+      } catch (err) {
         console.error('Failed to auto-save discovery log entry:', err)
-      })
+      }
 
       // Fetch details & translate
       await fetchGameDetails(selected.id)
