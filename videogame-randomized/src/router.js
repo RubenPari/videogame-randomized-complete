@@ -1,7 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
+import MainLayout from '@/layouts/MainLayout.vue'
 
 const routes = [
+  // Guest routes (no layout)
   {
     path: '/login',
     name: 'Login',
@@ -32,11 +34,18 @@ const routes = [
     component: () => import('@/views/ConfirmEmailView.vue'),
     meta: { guest: true },
   },
+  // Authenticated routes (with MainLayout)
   {
     path: '/',
-    name: 'Home',
-    component: () => import('@/views/HomeView.vue'),
+    component: MainLayout,
     meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'Home',
+        component: () => import('@/views/HomeView.vue'),
+      },
+    ],
   },
 ]
 
