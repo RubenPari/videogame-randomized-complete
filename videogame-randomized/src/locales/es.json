@@ -144,5 +144,12 @@
     "generic": "Algo salió mal. Inténtalo de nuevo.",
     "network": "Error de red. Comprueba tu conexión.",
     "system_error": "Error del Sistema"
+  },
+  "errors": {
+    "session_expired": "Sesión expirada. Inicia sesión de nuevo.",
+    "forbidden": "Acceso denegado.",
+    "server_error": "Error del servidor. Inténtalo más tarde.",
+    "network_error": "Error de red. Conexión fallida.",
+    "client_error": "Error en la solicitud."
   }
 }

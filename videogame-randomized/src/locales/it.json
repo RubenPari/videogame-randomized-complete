@@ -144,5 +144,12 @@
     "generic": "Qualcosa è andato storto. Riprova.",
     "network": "Errore di rete. Controlla la tua connessione.",
     "system_error": "Errore di Sistema"
+  },
+  "errors": {
+    "session_expired": "Sessione scaduta. Accedi di nuovo.",
+    "forbidden": "Accesso negato.",
+    "server_error": "Errore del server. Riprova più tardi.",
+    "network_error": "Errore di rete. Connessione fallita.",
+    "client_error": "Errore nella richiesta."
   }
 }

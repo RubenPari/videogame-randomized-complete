@@ -144,5 +144,12 @@
     "generic": "Something went wrong. Try again.",
     "network": "Network error. Check your connection.",
     "system_error": "System Error"
+  },
+  "errors": {
+    "session_expired": "Session expired. Please sign in again.",
+    "forbidden": "Forbidden access.",
+    "server_error": "Server error encountered. Please try again later.",
+    "network_error": "Network error. Connection failed.",
+    "client_error": "Client request error."
   }
 }
