@@ -40,7 +40,7 @@ var allowedOrigins = string.IsNullOrWhiteSpace(corsOriginsEnv)
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
         connectionString,
-        ServerVersion.AutoDetect(connectionString),
+        new MySqlServerVersion(new Version(8, 0, 0)),
         b => b.MigrationsAssembly("videogame-randomized-back")
     ));
 
@@ -151,11 +151,30 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Apply pending migrations automatically on startup
-using (var scope = app.Services.CreateScope())
+// Apply pending migrations automatically on startup (with retry for Cloud SQL proxy readiness)
+try
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
+    var retries = 5;
+    for (var i = 0; i < retries; i++)
+    {
+        try
+        {
+            db.Database.Migrate();
+            break;
+        }
+        catch (Exception ex) when (i < retries - 1)
+        {
+            Console.WriteLine($"Migration attempt {i + 1} failed: {ex.Message}. Retrying in 5s...");
+            Thread.Sleep(5000);
+        }
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Migration failed after all retries: {ex.Message}");
+    if (!app.Environment.IsProduction()) throw;
 }
 
 app.UseCors();

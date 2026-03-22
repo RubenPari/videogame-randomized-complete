@@ -1,20 +1,14 @@
-# Use Node.js LTS (Alpine for smaller image size)
-FROM node:20-alpine
-
-# Set the working directory inside the container
+# Build stage
+FROM node:20-alpine AS build
 WORKDIR /app
-
-# Copy package configuration to install dependencies
 COPY package*.json ./
-
-# Install project dependencies (npm ci is faster and more reliable)
 RUN npm ci
-
-# Copy the rest of the application files
 COPY . .
+RUN npm run build
 
-# Expose Vite's default dev server port
-EXPOSE 5173
-
-# Run the dev server and bind to all host interfaces (0.0.0.0)
-CMD ["npm", "run", "dev", "--", "--host"]
+# Production stage
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 8080
+CMD ["nginx", "-g", "daemon off;"]
