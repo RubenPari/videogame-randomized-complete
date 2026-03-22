@@ -217,6 +217,7 @@ const handleClearPastHistory = async () => {
           :pastHistory="discovery.pastHistory.value"
           @clear-history="discovery.clearHistory"
           @clear-past-history="handleClearPastHistory"
+          @select-game="discovery.loadGameById"
         />
 
         <!-- Error Reporting -->

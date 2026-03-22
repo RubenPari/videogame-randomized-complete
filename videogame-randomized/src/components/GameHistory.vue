@@ -6,10 +6,11 @@ const props = defineProps({
   pastHistory: { type: Array, default: () => [] }
 })
 
-const emit = defineEmits(['clear-history', 'clear-past-history'])
+const emit = defineEmits(['clear-history', 'clear-past-history', 'select-game'])
 
 const onClear = () => emit('clear-history')
 const onClearPast = () => emit('clear-past-history')
+const onSelectGame = (gameId) => emit('select-game', gameId)
 
 const pastCount = computed(() => props.pastHistory.length)
 </script>
@@ -36,7 +37,8 @@ const pastCount = computed(() => props.pastHistory.length)
 
       <div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-2">
         <div v-for="(game, index) in gameHistory.slice().reverse()" :key="game.id"
-          class="flex items-center justify-between p-3 bg-zinc-950 border border-zinc-800 rounded-lg group hover:border-zinc-700 transition-colors">
+          @click="onSelectGame(game.id)"
+          class="flex items-center justify-between p-3 bg-zinc-950 border border-zinc-800 rounded-lg group hover:border-cyan-500/50 transition-colors cursor-pointer">
           <div class="flex items-center gap-3 overflow-hidden">
             <span class="text-xs font-mono text-zinc-600">#{{ gameHistory.length - index }}</span>
             <span class="text-sm font-bold text-zinc-400 truncate group-hover:text-white transition-colors">{{ game.name }}</span>
@@ -63,7 +65,8 @@ const pastCount = computed(() => props.pastHistory.length)
       </div>
       <div class="flex flex-wrap gap-1.5">
         <span v-for="game in pastHistory.slice(0, 20)" :key="game.id"
-          class="text-[10px] font-mono px-2 py-0.5 bg-zinc-950/80 border border-zinc-800/50 text-zinc-500 rounded truncate max-w-[150px]"
+          @click="onSelectGame(game.id)"
+          class="text-[10px] font-mono px-2 py-0.5 bg-zinc-950/80 border border-zinc-800/50 text-zinc-500 rounded truncate max-w-[150px] cursor-pointer hover:text-white hover:border-cyan-500/50 transition-colors"
           :title="game.name">
           {{ game.name }}
         </span>

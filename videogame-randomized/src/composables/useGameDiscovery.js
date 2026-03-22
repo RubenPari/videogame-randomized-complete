@@ -150,6 +150,26 @@ export function useGameDiscovery() {
   }
 
   /**
+   * Loads a specific game by ID from the RAWG API and displays it
+   * @param {number} gameId
+   */
+  const loadGameById = async (gameId) => {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const response = await apiService.getGameDetails(gameId)
+      currentGame.value = response.data
+      await fetchGameDetails(gameId)
+    } catch (err) {
+      console.error('Failed to load game:', err)
+      error.value = 'System failure: unable to retrieve classified data.'
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
    * Resets current session history
    */
   const clearHistory = () => {
@@ -166,6 +186,7 @@ export function useGameDiscovery() {
     totalGamesCount,
     filters,
     generateGame,
+    loadGameById,
     clearHistory,
     loadPastHistory,
     clearPastHistory
