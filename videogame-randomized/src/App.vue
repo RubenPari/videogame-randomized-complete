@@ -1,5 +1,5 @@
 <script setup>
-import GlobalToast from './components/GlobalToast.vue'
+import GlobalToast from './components/base/GlobalToast.vue'
 </script>
 
 <template>

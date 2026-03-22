@@ -6,7 +6,8 @@ const toastStore = useToastStore()
 
 <template>
   <Transition name="toast">
-    <div v-if="toastStore.showNotification"
+    <div
+v-if="toastStore.showNotification"
       class="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-3 rounded-xl font-mono text-xs uppercase tracking-wider font-bold shadow-2xl z-50 flex items-center gap-3 backdrop-blur-md border"
       :class="toastStore.notificationType === 'success'
         ? 'bg-cyan-500/90 text-zinc-950 border-cyan-400'

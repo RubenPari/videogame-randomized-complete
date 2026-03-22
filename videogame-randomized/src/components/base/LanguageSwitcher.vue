@@ -1,9 +1,9 @@
 <template>
   <div class="relative">
     <button
-      @click="isOpen = !isOpen"
       class="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-800/50 border border-zinc-700 hover:bg-zinc-800 transition-colors text-sm font-medium"
       aria-label="Select Language"
+      @click="isOpen = !isOpen"
     >
       <span class="text-xl leading-none">{{ currentLangInfo.flag }}</span>
       <span class="hidden sm:inline">{{ currentLangInfo.name }}</span>
@@ -26,9 +26,9 @@
       <button
         v-for="lang in availableLanguages"
         :key="lang.code"
-        @click="switchLanguage(lang.code)"
         class="w-full text-left px-4 py-2 text-sm hover:bg-zinc-700 transition-colors flex items-center justify-between"
         :class="{ 'text-cyan-400 font-medium bg-zinc-700/50': currentLocale === lang.code }"
+        @click="switchLanguage(lang.code)"
       >
         <div class="flex items-center gap-3">
           <span class="text-lg">{{ lang.flag }}</span>
