@@ -28,17 +28,19 @@ const pastCount = computed(() => props.pastHistory.length)
         </h3>
         <div class="flex items-center gap-2">
           <!-- Purge Button -->
-          <button @click="onClear"
-            class="text-[10px] font-bold text-zinc-600 hover:text-red-400 uppercase tracking-widest transition-colors bg-zinc-950 px-2 py-1.5 rounded border border-zinc-800 hover:border-red-500/50">
+          <button
+class="text-[10px] font-bold text-zinc-600 hover:text-red-400 uppercase tracking-widest transition-colors bg-zinc-950 px-2 py-1.5 rounded border border-zinc-800 hover:border-red-500/50"
+            @click="onClear">
             {{ $t('history.purge') }}
           </button>
         </div>
       </div>
 
       <div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-2">
-        <div v-for="(game, index) in gameHistory.slice().reverse()" :key="game.id"
-          @click="onSelectGame(game.id)"
-          class="flex items-center justify-between p-3 bg-zinc-950 border border-zinc-800 rounded-lg group hover:border-cyan-500/50 transition-colors cursor-pointer">
+        <div
+v-for="(game, index) in gameHistory.slice().reverse()" :key="game.id"
+          class="flex items-center justify-between p-3 bg-zinc-950 border border-zinc-800 rounded-lg group hover:border-cyan-500/50 transition-colors cursor-pointer"
+          @click="onSelectGame(game.id)">
           <div class="flex items-center gap-3 overflow-hidden">
             <span class="text-xs font-mono text-zinc-600">#{{ gameHistory.length - index }}</span>
             <span class="text-sm font-bold text-zinc-400 truncate group-hover:text-white transition-colors">{{ game.name }}</span>
@@ -58,19 +60,22 @@ const pastCount = computed(() => props.pastHistory.length)
           {{ $t('history.excluded_games') }}
           <span class="text-cyan-400/60 font-mono">{{ pastCount }}</span>
         </h4>
-        <button @click="onClearPast"
-          class="text-[10px] font-bold text-zinc-600 hover:text-red-400 uppercase tracking-widest transition-colors px-2 py-1 rounded border border-zinc-800/50 hover:border-red-500/50">
+        <button
+class="text-[10px] font-bold text-zinc-600 hover:text-red-400 uppercase tracking-widest transition-colors px-2 py-1 rounded border border-zinc-800/50 hover:border-red-500/50"
+          @click="onClearPast">
           {{ $t('history.reset') }}
         </button>
       </div>
       <div class="flex flex-wrap gap-1.5">
-        <span v-for="game in pastHistory.slice(0, 20)" :key="game.id"
-          @click="onSelectGame(game.id)"
+        <span
+v-for="game in pastHistory.slice(0, 20)" :key="game.id"
           class="text-[10px] font-mono px-2 py-0.5 bg-zinc-950/80 border border-zinc-800/50 text-zinc-500 rounded truncate max-w-[150px] cursor-pointer hover:text-white hover:border-cyan-500/50 transition-colors"
-          :title="game.name">
+          :title="game.name"
+          @click="onSelectGame(game.id)">
           {{ game.name }}
         </span>
-        <span v-if="pastCount > 20"
+        <span
+v-if="pastCount > 20"
           class="text-[10px] font-mono px-2 py-0.5 text-zinc-600">
           +{{ pastCount - 20 }} {{ $t('history.others') }}
         </span>

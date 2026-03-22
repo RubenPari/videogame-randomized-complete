@@ -67,8 +67,8 @@ const handleSubmit = async () => {
       <!-- Form -->
       <form
         v-else
-        @submit.prevent="handleSubmit"
         class="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8 space-y-6 backdrop-blur-sm"
+        @submit.prevent="handleSubmit"
       >
         <div
           v-if="error"
