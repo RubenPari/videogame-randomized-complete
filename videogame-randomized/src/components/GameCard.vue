@@ -4,9 +4,10 @@ import { useI18n } from 'vue-i18n'
 import { useVaultStore } from '@/stores/useVaultStore'
 import { useToastStore } from '@/stores/useToastStore'
 import api from '@/services/api'
+import { formatDate } from '@/utils/formatters'
 import GameMediaGallery from './GameMediaGallery.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const props = defineProps({
   game: { type: Object, default: null },
@@ -80,21 +81,14 @@ const toggleSaveGame = async () => {
   }
 }
 
-const formatDate = (dateString) => {
-  if (!dateString) return 'UNKNOWN'
-  return new Date(dateString).toLocaleDateString('it-IT', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  }).toUpperCase()
-}
 </script>
 
 <template>
   <div v-if="game" class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl relative group flex flex-col">
     <!-- Image Section -->
     <div class="relative h-72 md:h-96 w-full flex-shrink-0">
-      <img :src="game.backgroundImage || game.background_image || '/placeholder-game.jpg'" :alt="game.name"
+      <img
+:src="game.backgroundImage || game.background_image || '/placeholder-game.jpg'" :alt="game.name"
         class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
       <div class="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/40 to-transparent"></div>
 
@@ -110,9 +104,10 @@ const formatDate = (dateString) => {
 
       <!-- Save Button -->
       <div class="absolute top-4 left-4">
-        <button @click="toggleSaveGame"
-          class="p-2.5 rounded-lg backdrop-blur border transition-all"
-          :class="isSaved ? 'bg-fuchsia-500/20 border-fuchsia-500 text-fuchsia-400 hover:bg-fuchsia-500/30' : 'bg-zinc-950/90 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-600'">
+        <button
+class="p-2.5 rounded-lg backdrop-blur border transition-all"
+          :class="isSaved ? 'bg-fuchsia-500/20 border-fuchsia-500 text-fuchsia-400 hover:bg-fuchsia-500/30' : 'bg-zinc-950/90 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-600'"
+          @click="toggleSaveGame">
           <svg v-if="isSaved" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
              <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10l-7-3.5L3 15V5z" clip-rule="evenodd"></path>
           </svg>
@@ -125,7 +120,8 @@ const formatDate = (dateString) => {
       <!-- Title & Release -->
       <div class="absolute bottom-0 left-0 w-full p-6 md:p-8">
         <div class="flex flex-wrap gap-2 mb-3">
-          <span v-for="genre in game.genres?.slice(0,3)" :key="genre.id"
+          <span
+v-for="genre in game.genres?.slice(0,3)" :key="genre.id"
             class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 bg-zinc-800/80 backdrop-blur border border-zinc-700 text-zinc-300 rounded">
             {{ genre.name }}
           </span>
@@ -135,7 +131,7 @@ const formatDate = (dateString) => {
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
           </svg>
-          {{ formatDate(game.released) }}
+          {{ formatDate(game.released, locale) }}
         </div>
       </div>
     </div>
@@ -146,7 +142,8 @@ const formatDate = (dateString) => {
       <div>
         <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">{{ $t('game.platforms') }}</h3>
         <div class="flex flex-wrap gap-2">
-          <span v-for="platform in game.platforms" :key="platform.platform.id"
+          <span
+v-for="platform in game.platforms" :key="platform.platform.id"
             class="text-xs font-mono px-2.5 py-1 bg-zinc-950 border border-zinc-800 text-zinc-400 rounded-md flex items-center gap-2">
             <span class="w-1.5 h-1.5 rounded-full bg-cyan-500/50"></span>
             {{ platform.platform.name }}
@@ -160,14 +157,15 @@ const formatDate = (dateString) => {
           <div class="w-1 h-5 bg-gradient-to-b from-cyan-400 to-fuchsia-500 rounded-full"></div>
           <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-[0.2em]">{{ $t('game.description') }}</h3>
         </div>
+        <!-- eslint-disable-next-line vue/no-v-html -->
         <div class="description-content" v-html="description"></div>
       </div>
 
       <GameMediaGallery
-        :isLoadingMedia="isLoadingMedia"
+        :is-loading-media="isLoadingMedia"
         :screenshots="screenshots"
         :videos="videos"
-        :youtubeVideoId="youtubeVideoId"
+        :youtube-video-id="youtubeVideoId"
       />
     </div>
   </div>

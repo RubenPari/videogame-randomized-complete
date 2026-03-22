@@ -2,8 +2,9 @@
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useVaultStore } from '@/stores/useVaultStore'
+import { formatDate } from '@/utils/formatters'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 defineProps({
   show: { type: Boolean, default: false }
@@ -48,14 +49,6 @@ const exportGames = () => {
   URL.revokeObjectURL(url)
 }
 
-const formatDate = (dateString) => {
-  if (!dateString) return 'UNKNOWN'
-  return new Date(dateString).toLocaleDateString('it-IT', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  }).toUpperCase()
-}
 </script>
 
 <template>
@@ -79,7 +72,7 @@ const formatDate = (dateString) => {
                 <p class="text-xs font-mono text-zinc-500">{{ $t('vault_modal.total_entries') }}: {{ vault.count }}</p>
               </div>
             </div>
-            <button @click="emit('close')" class="p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-500 hover:text-white hover:border-zinc-700 transition-colors">
+            <button class="p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-500 hover:text-white hover:border-zinc-700 transition-colors" @click="emit('close')">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
           </div>
@@ -88,16 +81,17 @@ const formatDate = (dateString) => {
             <!-- Search & Actions -->
             <div class="flex flex-col sm:flex-row gap-4 justify-between flex-shrink-0">
               <div class="relative w-full sm:w-96">
-                <input v-model="searchQuery" type="text" :placeholder="$t('vault_modal.search_placeholder')"
+                <input
+v-model="searchQuery" type="text" :placeholder="$t('vault_modal.search_placeholder')"
                   class="w-full bg-zinc-950 border border-zinc-800 text-white font-mono text-sm px-4 py-3 pl-10 rounded-xl focus:outline-none focus:border-fuchsia-500 focus:ring-1 focus:ring-fuchsia-500 transition-colors">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
               </div>
               <div class="flex gap-2">
-                <button v-if="vault.savedGames.length" @click="exportGames" class="px-4 py-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-600 text-zinc-300 hover:text-white text-[10px] font-bold uppercase tracking-widest rounded-xl transition-colors flex items-center gap-2">
+                <button v-if="vault.savedGames.length" class="px-4 py-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-600 text-zinc-300 hover:text-white text-[10px] font-bold uppercase tracking-widest rounded-xl transition-colors flex items-center gap-2" @click="exportGames">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                   {{ $t('vault_modal.export') }}
                 </button>
-                <button v-if="vault.savedGames.length" @click="clearAll" class="px-4 py-2 border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500 text-[10px] font-bold uppercase tracking-widest rounded-xl transition-colors flex items-center gap-2">
+                <button v-if="vault.savedGames.length" class="px-4 py-2 border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500 text-[10px] font-bold uppercase tracking-widest rounded-xl transition-colors flex items-center gap-2" @click="clearAll">
                   {{ $t('vault_modal.purge_all') }}
                 </button>
               </div>
@@ -118,13 +112,13 @@ const formatDate = (dateString) => {
                   <div class="p-4 flex-1 flex flex-col justify-between min-w-0">
                     <div>
                       <h3 class="text-white font-bold text-sm truncate uppercase tracking-tight">{{ game.name }}</h3>
-                      <p class="text-[10px] text-zinc-500 font-mono mt-1">{{ formatDate(game.released) }}</p>
+                      <p class="text-[10px] text-zinc-500 font-mono mt-1">{{ formatDate(game.released, locale) }}</p>
                     </div>
                     <div class="flex items-center justify-between">
                       <span class="text-[10px] font-bold text-cyan-400 font-mono flex items-center gap-1 bg-zinc-900 px-2 py-1 rounded">
                         ★ {{ Number(game.rating).toFixed(1) }}
                       </span>
-                      <button @click="removeGame(game.id)" class="p-1.5 text-zinc-600 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors" :title="$t('vault_modal.delete_record')">
+                      <button class="p-1.5 text-zinc-600 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors" :title="$t('vault_modal.delete_record')" @click="removeGame(game.id)">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                       </button>
                     </div>
