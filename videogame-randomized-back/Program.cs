@@ -156,30 +156,33 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Apply pending migrations automatically on startup (with retry for Cloud SQL proxy readiness)
-try
+// Apply pending migrations automatically on startup (skipped in "Testing" for integration tests)
+if (!app.Environment.IsEnvironment("Testing"))
 {
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var retries = 5;
-    for (var i = 0; i < retries; i++)
+    try
     {
-        try
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var retries = 5;
+        for (var i = 0; i < retries; i++)
         {
-            db.Database.Migrate();
-            break;
-        }
-        catch (Exception ex) when (i < retries - 1)
-        {
-            Console.WriteLine($"Migration attempt {i + 1} failed: {ex.Message}. Retrying in 5s...");
-            Thread.Sleep(5000);
+            try
+            {
+                db.Database.Migrate();
+                break;
+            }
+            catch (Exception ex) when (i < retries - 1)
+            {
+                Console.WriteLine($"Migration attempt {i + 1} failed: {ex.Message}. Retrying in 5s...");
+                Thread.Sleep(5000);
+            }
         }
     }
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Migration failed after all retries: {ex.Message}");
-    if (!app.Environment.IsProduction()) throw;
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Migration failed after all retries: {ex.Message}");
+        if (!app.Environment.IsProduction()) throw;
+    }
 }
 
 app.UseExceptionHandler();
@@ -198,3 +201,6 @@ app.MapControllers();
 app.MapGet("/", () => "Hello World!");
 
 app.Run();
+
+/// <summary>Exposes <see cref="Program"/> for <c>WebApplicationFactory&lt;Program&gt;</c> in integration tests.</summary>
+public partial class Program;
