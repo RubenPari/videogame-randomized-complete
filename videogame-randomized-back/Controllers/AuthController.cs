@@ -21,7 +21,10 @@ public class AuthController(AuthService authService, EmailService emailService) 
         var result = await authService.RegisterAsync(dto.Email, dto.Password);
         if (!result.IsSuccess)
         {
-            return BadRequest(new { errors = result.Errors });
+            return Problem(
+                title: "Registration failed",
+                detail: string.Join("; ", result.Errors ?? []),
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         var token = await authService.GenerateEmailConfirmationTokenAsync(dto.Email);
@@ -54,7 +57,10 @@ public class AuthController(AuthService authService, EmailService emailService) 
         var result = await authService.LoginAsync(dto.Email, dto.Password);
         if (!result.IsSuccess)
         {
-            return BadRequest(new { error = result.Error });
+            return Problem(
+                title: "Login failed",
+                detail: result.Error,
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         return Ok(new AuthResponseDto(result.Token!, result.Email!));
@@ -73,7 +79,10 @@ public class AuthController(AuthService authService, EmailService emailService) 
 
         if (!result.IsSuccess)
         {
-            return BadRequest(new { error = result.Error });
+            return Problem(
+                title: "Email confirmation failed",
+                detail: result.Error,
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         return Ok(new { message = "Email confirmed successfully. You can now log in." });
@@ -118,7 +127,10 @@ public class AuthController(AuthService authService, EmailService emailService) 
 
         if (!result.IsSuccess)
         {
-            return BadRequest(new { error = result.Error });
+            return Problem(
+                title: "Password reset failed",
+                detail: result.Error,
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         return Ok(new { message = "Password reset successfully. You can now log in." });
@@ -136,13 +148,19 @@ public class AuthController(AuthService authService, EmailService emailService) 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
         {
-            return BadRequest(new { error = "User not found" });
+            return Problem(
+                title: "Unauthorized",
+                detail: "User not found",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         var result = await authService.ChangePasswordAsync(userId, dto.CurrentPassword, dto.NewPassword);
         if (!result.IsSuccess)
         {
-            return BadRequest(new { error = result.Error });
+            return Problem(
+                title: "Password change failed",
+                detail: result.Error,
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         return Ok(new { message = "Password changed successfully." });

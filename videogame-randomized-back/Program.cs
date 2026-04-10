@@ -9,6 +9,7 @@ using System.Text.Json.Serialization;
 using DotNetEnv;
 using videogame_randomized_back.Data;
 using videogame_randomized_back.DTOs;
+using videogame_randomized_back.Infrastructure;
 using videogame_randomized_back.Mappers;
 using videogame_randomized_back.Models;
 using videogame_randomized_back.Services;
@@ -120,6 +121,9 @@ builder.Services.AddScoped<GameMapper>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateGameDto>();
 builder.Services.AddFluentValidationAutoValidation();
 
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -178,6 +182,7 @@ catch (Exception ex)
     if (!app.Environment.IsProduction()) throw;
 }
 
+app.UseExceptionHandler();
 app.UseCors();
 
 if (app.Environment.IsDevelopment())
