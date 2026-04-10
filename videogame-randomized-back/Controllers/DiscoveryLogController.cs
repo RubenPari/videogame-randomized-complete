@@ -1,17 +1,15 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using videogame_randomized_back.Data;
 using videogame_randomized_back.DTOs;
-using videogame_randomized_back.Models;
+using videogame_randomized_back.Services;
 
 namespace videogame_randomized_back.Controllers;
 
 [ApiController]
 [Route("api/discovery-log")]
 [Authorize]
-public class DiscoveryLogController(AppDbContext db) : ControllerBase
+public class DiscoveryLogController(IDiscoveryLogService discoveryLog) : ControllerBase
 {
     private string GetUserId() =>
         User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -21,16 +19,10 @@ public class DiscoveryLogController(AppDbContext db) : ControllerBase
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(List<DiscoveryLogResponseDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<List<DiscoveryLogResponseDto>>> GetDiscoveryLog()
+    public async Task<ActionResult<List<DiscoveryLogResponseDto>>> GetDiscoveryLog(
+        CancellationToken cancellationToken)
     {
-        var userId = GetUserId();
-        var entries = await db.DiscoveryLog
-            .AsNoTracking()
-            .Where(e => e.UserId == userId)
-            .OrderByDescending(e => e.DiscoveredAt)
-            .Select(e => new DiscoveryLogResponseDto(e.GameExternalId, e.GameName))
-            .ToListAsync();
-
+        var entries = await discoveryLog.GetEntriesForUserAsync(GetUserId(), cancellationToken);
         return Ok(entries);
     }
 
@@ -39,37 +31,12 @@ public class DiscoveryLogController(AppDbContext db) : ControllerBase
     /// </summary>
     [HttpPost]
     [ProducesResponseType(typeof(SaveDiscoveryLogResultDto), StatusCodes.Status200OK)]
-    public async Task<ActionResult<SaveDiscoveryLogResultDto>> SaveDiscoveryLog([FromBody] List<DiscoveryLogDto>? entries)
+    public async Task<ActionResult<SaveDiscoveryLogResultDto>> SaveDiscoveryLog(
+        [FromBody] List<DiscoveryLogDto>? entries,
+        CancellationToken cancellationToken)
     {
-        if (entries is null || entries.Count == 0)
-            return Ok(new SaveDiscoveryLogResultDto(0));
-
-        var userId = GetUserId();
-
-        var incomingIds = entries.Select(e => e.Id).ToList();
-
-        var existingIds = await db.DiscoveryLog
-            .Where(e => e.UserId == userId && incomingIds.Contains(e.GameExternalId))
-            .Select(e => e.GameExternalId)
-            .ToListAsync();
-
-        var newEntries = entries
-            .Where(e => !existingIds.Contains(e.Id))
-            .Select(e => new DiscoveryLogEntry
-            {
-                UserId = userId,
-                GameExternalId = e.Id,
-                GameName = e.Name,
-                DiscoveredAt = DateTime.UtcNow
-            })
-            .ToList();
-
-        if (newEntries.Count <= 0) return Ok(new SaveDiscoveryLogResultDto(newEntries.Count));
-        
-        db.DiscoveryLog.AddRange(newEntries);
-        await db.SaveChangesAsync();
-
-        return Ok(new SaveDiscoveryLogResultDto(newEntries.Count));
+        var result = await discoveryLog.SaveEntriesAsync(GetUserId(), entries, cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>
@@ -77,14 +44,9 @@ public class DiscoveryLogController(AppDbContext db) : ControllerBase
     /// </summary>
     [HttpDelete]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
-    public async Task<ActionResult<object>> ClearDiscoveryLog()
+    public async Task<ActionResult<object>> ClearDiscoveryLog(CancellationToken cancellationToken)
     {
-        var userId = GetUserId();
-        
-        await db.DiscoveryLog
-            .Where(e => e.UserId == userId)
-            .ExecuteDeleteAsync();
-
+        await discoveryLog.ClearForUserAsync(GetUserId(), cancellationToken);
         return Ok(new { message = "Discovery log cleared" });
     }
 }

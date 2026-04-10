@@ -113,6 +113,7 @@ builder.Services.Configure<EmailSettings>(options =>
 
 // Add services to the container
 builder.Services.AddScoped<GamesService>();
+builder.Services.AddScoped<IDiscoveryLogService, DiscoveryLogService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<GameMapper>();
