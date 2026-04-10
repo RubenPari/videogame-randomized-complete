@@ -149,21 +149,17 @@ public class GamesService(AppDbContext db)
         await db.SaveChangesAsync();
     }
 
-    public async Task<bool> UpdateByUserAsync(string userId, int id, Game updatedGame)
+    public async Task<bool> UpdateSavedGameByUserAsync(string userId, int id, UpdateGameDto dto)
     {
         var game = await db.Games
-            .Include(g => g.Genres)
-            .Include(g => g.Platforms)
             .FirstOrDefaultAsync(g => g.Id == id && g.UserId == userId);
-        
+
         if (game is null) return false;
 
-        game.Note = updatedGame.Note;
-        game.PersonalRating = updatedGame.PersonalRating;
-        
-        await SyncGenresAndPlatforms(game);
+        if (dto.PersonalRating.HasValue) game.PersonalRating = dto.PersonalRating;
+        if (dto.Note != null) game.Note = dto.Note;
+
         await db.SaveChangesAsync();
-        
         return true;
     }
 

@@ -73,14 +73,7 @@ public class SavedGamesController(GamesService service, GameMapper mapper) : Con
     public async Task<IActionResult> UpdateSavedGame(int id, [FromBody] UpdateGameDto dto)
     {
         var userId = GetUserId();
-        
-        var game = await service.GetByUserAsync(userId, id);
-        if (game is null) return NotFound();
-
-        if (dto.PersonalRating.HasValue) game.PersonalRating = dto.PersonalRating;
-        if (dto.Note != null) game.Note = dto.Note;
-
-        await service.UpdateAsync(game);
+        if (!await service.UpdateSavedGameByUserAsync(userId, id, dto)) return NotFound();
         return Ok();
     }
 
