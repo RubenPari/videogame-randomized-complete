@@ -18,16 +18,18 @@ npm run dev       # Dev server on :5173
 npm run build     # Production build
 npm run lint      # ESLint with auto-fix
 npm run format    # Prettier on src/
+npm run test      # Vitest (unit tests)
 ```
 
 ### Backend (`cd videogame-randomized-back`)
 ```
 dotnet build
+dotnet test       # xUnit (from solution: videogame-randomized-back.Tests)
 dotnet run
 dotnet watch run  # Hot reload
 ```
 
-No test framework is configured for either frontend or backend.
+See [API_HTTP.md](videogame-randomized-back/API_HTTP.md) for HTTP status and error body conventions.
 
 ## Architecture
 
@@ -45,7 +47,7 @@ No test framework is configured for either frontend or backend.
 - **Models** — `AppUser`, `Game`, `Genre`, `Platform`, `DiscoveryLogEntry` with many-to-many joins (`GameGenre`, `GamePlatform`)
 - **DTOs** — Record types with `init` properties. Separate create/update/response DTOs
 - **Mappers** — Mapperly source generators (`GameMapper`)
-- **Validators** — FluentValidation with `ValidationFilter` for auto-validation
+- **Validators** — FluentValidation with automatic MVC validation (`AddFluentValidationAutoValidation`)
 
 ### Auth Flow
 Registration → email confirmation (Mailtrap) → login returns JWT → stored in localStorage → httpClient attaches Bearer token → 401 triggers redirect to login.

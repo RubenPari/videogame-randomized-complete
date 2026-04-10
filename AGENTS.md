@@ -37,9 +37,7 @@ docker-compose up    # Start all services
 
 ## Testing
 
-**No test framework currently configured.** To add tests:
-- Frontend: Consider Vitest or Playwright
-- Backend: Use xUnit or NUnit with `dotnet test`
+**Tests:** Frontend uses Vitest (`npm run test`); backend uses xUnit (`dotnet test`, project `videogame-randomized-back.Tests`). Consider Playwright for E2E later.
 
 ---
 
@@ -125,7 +123,7 @@ private static async Task<Ok<List<ItemDto>>> GetItems(ItemService service)
 **Backend**:
 - Return typed Results (`Ok`, `NotFound`, `Conflict`)
 - Use FluentValidation for input validation
-- ValidationFilter for endpoint validation
+- FluentValidation automatic validation for controllers
 - Consistent error response format
 
 ---
