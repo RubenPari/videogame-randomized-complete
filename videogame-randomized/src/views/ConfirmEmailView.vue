@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import authService from '@/services/auth'
+import { getApiErrorMessage } from '@/utils/apiError'
 
 const { t } = useI18n()
 
@@ -26,7 +27,7 @@ onMounted(async () => {
     await authService.confirmEmail(userId, token)
     success.value = true
   } catch (err) {
-    error.value = err.response?.data?.error || t('auth.confirmation_failed_desc')
+    error.value = getApiErrorMessage(err, t('auth.confirmation_failed_desc'))
   } finally {
     isLoading.value = false
   }

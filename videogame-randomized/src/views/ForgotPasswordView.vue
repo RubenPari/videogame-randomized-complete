@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import authService from '@/services/auth'
+import { getApiErrorMessage } from '@/utils/apiError'
 
 const { t } = useI18n()
 
@@ -17,7 +18,7 @@ const handleSubmit = async () => {
     await authService.forgotPassword(email.value)
     success.value = true
   } catch (err) {
-    error.value = err.response?.data?.error || t('error.generic')
+    error.value = getApiErrorMessage(err, t('error.generic'))
   } finally {
     isLoading.value = false
   }

@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import authService from '@/services/auth'
+import { getApiErrorMessage } from '@/utils/apiError'
 
 const { t } = useI18n()
 
@@ -39,7 +40,7 @@ const handleSubmit = async () => {
     await authService.resetPassword(userId.value, token.value, newPassword.value)
     success.value = true
   } catch (err) {
-    error.value = err.response?.data?.error || t('auth.reset_failed')
+    error.value = getApiErrorMessage(err, t('auth.reset_failed'))
   } finally {
     isLoading.value = false
   }

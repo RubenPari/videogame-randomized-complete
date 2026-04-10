@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useToastStore } from '@/stores/useToastStore'
+import { getApiErrorMessage } from '@/utils/apiError'
 
 const { t } = useI18n()
 
@@ -24,12 +25,7 @@ const handleRegister = async () => {
     success.value = true
     toastStore.showToast('Registration successful!', 'success')
   } catch (err) {
-    const errors = err.response?.data?.errors
-    if (Array.isArray(errors)) {
-      error.value = errors.join(', ')
-    } else {
-      error.value = err.response?.data?.error || t('error.generic')
-    }
+    error.value = getApiErrorMessage(err, t('error.generic'))
   } finally {
     isLoading.value = false
   }

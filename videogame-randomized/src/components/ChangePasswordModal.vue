@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToastStore } from '@/stores/useToastStore'
 import authService from '@/services/auth'
+import { getApiErrorMessage } from '@/utils/apiError'
 
 defineProps({
   show: {
@@ -35,7 +36,7 @@ const handleSubmit = async () => {
     toastStore.showToast(t('home.password_changed'), 'success')
     emit('close')
   } catch (err) {
-    error.value = err.response?.data?.error || t('home.password_change_error')
+    error.value = getApiErrorMessage(err, t('home.password_change_error'))
   } finally {
     loading.value = false
   }
