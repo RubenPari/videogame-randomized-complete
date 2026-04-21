@@ -15,6 +15,7 @@ namespace videogame_randomized_back.Services;
 /// </summary>
 public class AuthService(
     UserManager<AppUser> userManager, 
+    EmailService emailService,
     IOptions<JwtSettings> jwtSettings,
     ILogger<AuthService> logger)
 {
@@ -134,7 +135,7 @@ public class AuthService(
         if (!await userManager.IsEmailConfirmedAsync(user))
         {
             logger.LogInformation("Login attempt for unconfirmed email: {Email}", email);
-            return LoginResult.Failed("Please confirm your email before logging in");
+            return LoginResult.EmailNotConfirmedFailure("Please confirm your email before logging in");
         }
 
         var isPasswordValid = await userManager.CheckPasswordAsync(user, password);
@@ -148,6 +149,46 @@ public class AuthService(
         
         logger.LogInformation("Login successful for user: {Email}", email);
         return LoginResult.Succeeded(token, user.Email!);
+    }
+
+    public async Task<ResendConfirmationResult> ResendConfirmationEmailAsync(
+        string email,
+        string password,
+        string frontendBaseUrl)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            logger.LogWarning("Resend confirmation failed: Email {Email} not found", email);
+            return ResendConfirmationResult.Failed("Invalid email or password");
+        }
+
+        if (await userManager.IsEmailConfirmedAsync(user))
+        {
+            return ResendConfirmationResult.Failed("Email already confirmed. You can sign in.");
+        }
+
+        var isPasswordValid = await userManager.CheckPasswordAsync(user, password);
+        if (!isPasswordValid)
+        {
+            logger.LogWarning("Resend confirmation failed: Invalid password for {Email}", email);
+            return ResendConfirmationResult.Failed("Invalid email or password");
+        }
+
+        var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encodedToken = Uri.EscapeDataString(token);
+
+        var confirmationLink = $"{frontendBaseUrl}/confirm-email?userId={user.Id}&token={encodedToken}";
+        try
+        {
+            await emailService.SendConfirmationEmailAsync(user.Email!, confirmationLink);
+            return ResendConfirmationResult.Succeeded(confirmationEmailSent: true);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Resend confirmation succeeded but email was not sent for {Email}", user.Email);
+            return ResendConfirmationResult.Succeeded(confirmationEmailSent: false);
+        }
     }
 
     /// <summary>

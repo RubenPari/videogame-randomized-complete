@@ -10,6 +10,8 @@ public record ResetPasswordDto(string UserId, string Token, string NewPassword);
 
 public record ChangePasswordDto(string CurrentPassword, string NewPassword);
 
+public record ResendConfirmationDto(string Email, string Password);
+
 public record AuthResponseDto(string Token, string Email);
 
 public record AuthResult
@@ -37,9 +39,16 @@ public record LoginResult
     public string? Token { get; init; }
     public string? Email { get; init; }
     public string? Error { get; private init; }
+    public bool EmailNotConfirmed { get; private init; }
 
     public static LoginResult Succeeded(string token, string email) => new() { IsSuccess = true, Token = token, Email = email };
     public static LoginResult Failed(string error) => new() { IsSuccess = false, Error = error };
+    public static LoginResult EmailNotConfirmedFailure(string error) => new()
+    {
+        IsSuccess = false,
+        Error = error,
+        EmailNotConfirmed = true
+    };
 }
 
 public record ConfirmationResult
@@ -49,4 +58,19 @@ public record ConfirmationResult
 
     public static ConfirmationResult Succeeded() => new() { IsSuccess = true };
     public static ConfirmationResult Failed(string error) => new() { IsSuccess = false, Error = error };
+}
+
+public record ResendConfirmationResult
+{
+    public bool IsSuccess { get; private init; }
+    public string? Error { get; private init; }
+    public bool ConfirmationEmailSent { get; private init; }
+
+    public static ResendConfirmationResult Succeeded(bool confirmationEmailSent = true) => new()
+    {
+        IsSuccess = true,
+        ConfirmationEmailSent = confirmationEmailSent
+    };
+
+    public static ResendConfirmationResult Failed(string error) => new() { IsSuccess = false, Error = error };
 }

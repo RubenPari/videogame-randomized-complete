@@ -2,13 +2,17 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using videogame_randomized_back.DTOs;
+using videogame_randomized_back.Infrastructure;
 using videogame_randomized_back.Services;
 
 namespace videogame_randomized_back.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController(AuthService authService, EmailService emailService) : ControllerBase
+public class AuthController(
+    AuthService authService,
+    EmailService emailService,
+    ILogger<AuthController> logger) : ControllerBase
 {
     /// <summary>
     /// Registers a new user account
@@ -41,9 +45,26 @@ public class AuthController(AuthService authService, EmailService emailService) 
         
         var confirmationLink = $"{frontendBaseUrl}/confirm-email?userId={userId}&token={encodedToken}";
 
-        await emailService.SendConfirmationEmailAsync(dto.Email, confirmationLink);
+        try
+        {
+            await emailService.SendConfirmationEmailAsync(dto.Email, confirmationLink);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Registration succeeded but confirmation email was not sent for {Email}", dto.Email);
+            return Ok(new
+            {
+                message =
+                    "Registration successful, but we could not send the confirmation email. Check Mailtrap credentials (EMAIL_API_TOKEN) or try again later.",
+                confirmationEmailSent = false
+            });
+        }
 
-        return Ok(new { message = "Registration successful. Please check your email to confirm your account." });
+        return Ok(new
+        {
+            message = "Registration successful. Please check your email to confirm your account.",
+            confirmationEmailSent = true
+        });
     }
 
     /// <summary>
@@ -60,10 +81,38 @@ public class AuthController(AuthService authService, EmailService emailService) 
             return Problem(
                 title: "Login failed",
                 detail: result.Error,
+                type: result.EmailNotConfirmed ? AuthProblemTypes.LoginEmailNotConfirmed : null,
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
         return Ok(new AuthResponseDto(result.Token!, result.Email!));
+    }
+
+    /// <summary>
+    /// Resends the email confirmation link for an existing account.
+    /// </summary>
+    [HttpPost("resend-confirmation")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<object>> ResendConfirmation([FromBody] ResendConfirmationDto dto)
+    {
+        var frontendBaseUrl = Request.Headers.Origin.FirstOrDefault()
+                              ?? "http://localhost:5173";
+
+        var result = await authService.ResendConfirmationEmailAsync(dto.Email, dto.Password, frontendBaseUrl);
+        if (!result.IsSuccess)
+        {
+            return Problem(
+                title: "Resend confirmation failed",
+                detail: result.Error,
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        return Ok(new
+        {
+            message = "If the account exists and is not confirmed, a confirmation link has been sent.",
+            confirmationEmailSent = result.ConfirmationEmailSent
+        });
     }
 
     /// <summary>
@@ -109,7 +158,14 @@ public class AuthController(AuthService authService, EmailService emailService) 
         
         var resetLink = $"{frontendBaseUrl}/reset-password?userId={userId}&token={encodedToken}";
 
-        await emailService.SendPasswordResetEmailAsync(dto.Email, resetLink);
+        try
+        {
+            await emailService.SendPasswordResetEmailAsync(dto.Email, resetLink);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Password reset email was not sent for {Email}", dto.Email);
+        }
 
         return Ok(new { message = "If the email exists, a password reset link has been sent." });
     }

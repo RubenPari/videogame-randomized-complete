@@ -17,6 +17,10 @@ This document describes how the VideoGame Randomizer backend uses HTTP status co
 
 **Login policy:** Failed login (wrong email/password, unconfirmed email) returns **400** with Problem Details, not 401, so the client can show a specific message without treating it as “missing token”. Session expiry still uses **401** from the JWT middleware.
 
+When login fails because the email is not confirmed, the backend sets Problem Details `type` to `urn:videogame-randomizer:login:email-not-confirmed` so the frontend can offer a “resend confirmation email” action.
+
+`POST /api/auth/resend-confirmation` returns **200 OK** if the credentials are valid and the user is unconfirmed (and also returns 200 if the email send fails, with `confirmationEmailSent: false`). It returns **400 Bad Request** for invalid credentials or if the email is already confirmed.
+
 ## Server errors (5xx)
 
 - Unhandled exceptions are caught by `GlobalExceptionHandler` and returned as **500** Problem Details. In non-development environments, `detail` is generic; in Development, it may include the exception message.
