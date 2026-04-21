@@ -14,29 +14,51 @@ using videogame_randomized_back.Mappers;
 using videogame_randomized_back.Models;
 using videogame_randomized_back.Services;
 
-Env.Load();
+var rootEnvPath = ResolveRootEnvPath();
+
+if (rootEnvPath is not null)
+{
+    Env.NoClobber().Load(rootEnvPath);
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
-var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
-var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "videogames";
-var dbUser = Environment.GetEnvironmentVariable("DB_USER") ?? "root";
-var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "password";
+var dbHost = GetEnvOrDefault("DB_HOST", "localhost");
+var dbName = GetEnvOrDefault("DB_NAME", "videogames");
+var dbUser = GetEnvOrDefault("DB_USER", "root");
+var dbPassword = GetEnvOrDefault("DB_PASSWORD", "password");
 var connectionString = $"Server={dbHost};Database={dbName};Uid={dbUser};Pwd={dbPassword};";
 
-var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "fallback-secret-key-min-32-characters-long!";
-var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "videogame-randomizer";
-var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "videogame-randomizer-frontend";
-var jwtExpirationMinutes = int.Parse(Environment.GetEnvironmentVariable("JWT_EXPIRATION_MINUTES") ?? "1440");
+var jwtSecret = GetEnvOrDefault("JWT_SECRET", "fallback-secret-key-min-32-characters-long!");
+var jwtIssuer = GetEnvOrDefault("JWT_ISSUER", "videogame-randomizer");
+var jwtAudience = GetEnvOrDefault("JWT_AUDIENCE", "videogame-randomizer-frontend");
+var jwtExpirationMinutes = int.Parse(GetEnvOrDefault("JWT_EXPIRATION_MINUTES", "1440"));
 
-var emailFromEmail = Environment.GetEnvironmentVariable("EMAIL_FROM_EMAIL") ?? "hello@example.com";
-var emailFromName = Environment.GetEnvironmentVariable("EMAIL_FROM_NAME") ?? "VideoGame Randomizer";
-var emailApiToken = Environment.GetEnvironmentVariable("EMAIL_API_TOKEN") ?? "";
+var emailFromEmail = GetEnvOrDefault("EMAIL_FROM_EMAIL", "hello@example.com");
+var emailFromName = GetEnvOrDefault("EMAIL_FROM_NAME", "VideoGame Randomizer");
+var emailApiToken = GetEnvOrDefault("EMAIL_API_TOKEN", "");
 
-var corsOriginsEnv = Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS") ?? "";
+var corsOriginsEnv = GetEnvOrDefault("CORS_ALLOWED_ORIGINS", "");
 var allowedOrigins = string.IsNullOrWhiteSpace(corsOriginsEnv) 
     ? Array.Empty<string>() 
     : corsOriginsEnv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+static string? ResolveRootEnvPath()
+{
+    var candidatePaths = new[]
+    {
+        Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env")),
+        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".env"))
+    };
+
+    return candidatePaths.FirstOrDefault(File.Exists);
+}
+
+static string GetEnvOrDefault(string key, string fallback)
+{
+    var value = Environment.GetEnvironmentVariable(key);
+    return string.IsNullOrWhiteSpace(value) ? fallback : value;
+}
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
