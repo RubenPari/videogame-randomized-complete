@@ -49,4 +49,17 @@ public class DiscoveryLogController(IDiscoveryLogService discoveryLog) : Control
         await discoveryLog.ClearForUserAsync(GetUserId(), cancellationToken);
         return Ok(new { message = "Discovery log cleared" });
     }
+
+    /// <summary>
+    /// Removes a single discovery log entry for the current user
+    /// </summary>
+    [HttpDelete("{gameExternalId:int}")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    public async Task<ActionResult<object>> RemoveDiscoveryLogEntry(
+        [FromRoute] int gameExternalId,
+        CancellationToken cancellationToken)
+    {
+        var removed = await discoveryLog.RemoveEntryAsync(GetUserId(), gameExternalId, cancellationToken);
+        return Ok(new { removed });
+    }
 }

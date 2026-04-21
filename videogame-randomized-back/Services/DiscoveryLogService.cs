@@ -60,4 +60,16 @@ public class DiscoveryLogService(AppDbContext db) : IDiscoveryLogService
             .Where(e => e.UserId == userId)
             .ExecuteDeleteAsync(cancellationToken);
     }
+
+    public async Task<bool> RemoveEntryAsync(
+        string userId,
+        int gameExternalId,
+        CancellationToken cancellationToken = default)
+    {
+        var deleted = await db.DiscoveryLog
+            .Where(e => e.UserId == userId && e.GameExternalId == gameExternalId)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        return deleted > 0;
+    }
 }

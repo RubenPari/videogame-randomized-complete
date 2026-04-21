@@ -9,4 +9,6 @@ public interface IDiscoveryLogService
     Task<SaveDiscoveryLogResultDto> SaveEntriesAsync(string userId, List<DiscoveryLogDto>? entries, CancellationToken cancellationToken = default);
 
     Task ClearForUserAsync(string userId, CancellationToken cancellationToken = default);
+
+    Task<bool> RemoveEntryAsync(string userId, int gameExternalId, CancellationToken cancellationToken = default);
 }
