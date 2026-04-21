@@ -1,0 +1,242 @@
+<script setup>
+import { ref, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useGameDiscovery } from '@/composables/useGameDiscovery'
+import apiService from '@/services/api'
+import { formatDate } from '@/utils/formatters'
+
+const props = defineProps({
+  show: { type: Boolean, default: false },
+})
+
+const emit = defineEmits(['close'])
+const { t, locale } = useI18n()
+
+const discovery = useGameDiscovery()
+const searchQuery = ref('')
+
+const detailsById = ref(new Map())
+const loadingIds = ref(new Set())
+
+const filtered = computed(() => {
+  const items = discovery.pastHistory.value || []
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return items
+  return items.filter((g) => String(g?.name || '').toLowerCase().includes(q))
+})
+
+const visibleItems = computed(() => filtered.value.slice(0, 40))
+
+const preloadDetails = async (entries) => {
+  const ids = (entries || [])
+    .map((e) => Number(e?.id))
+    .filter((id) => Number.isFinite(id))
+
+  await Promise.allSettled(
+    ids.map(async (id) => {
+      if (detailsById.value.has(id) || loadingIds.value.has(id)) return
+      loadingIds.value.add(id)
+
+      try {
+        const res = await apiService.getGameDetails(id)
+        const g = res?.data
+        detailsById.value.set(id, {
+          id,
+          background_image: g?.background_image,
+          rating: typeof g?.rating === 'number' ? g.rating : null,
+          released: g?.released || null,
+        })
+      } catch {
+        // Non-blocking: we'll keep the entry text-only if details fail.
+      } finally {
+        loadingIds.value.delete(id)
+      }
+    }),
+  )
+}
+
+watch(
+  () => props.show,
+  (isOpen) => {
+    if (!isOpen) return
+    preloadDetails(visibleItems.value)
+  },
+  { immediate: true },
+)
+
+watch(
+  () => [props.show, searchQuery.value, discovery.pastHistory.value?.length],
+  ([isOpen]) => {
+    if (!isOpen) return
+    preloadDetails(visibleItems.value)
+  },
+)
+
+const removeOne = async (id) => {
+  await discovery.removeDiscovered(id)
+}
+
+const clearAll = async () => {
+  if (confirm(t('discovered_modal.confirm_purge'))) {
+    await discovery.clearPastHistory()
+    discovery.clearHistory()
+  }
+}
+</script>
+
+<template>
+  <Teleport to="body">
+    <Transition name="fade">
+      <div
+        v-if="show"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+        @click.self="emit('close')"
+      >
+        <div class="absolute inset-0 bg-zinc-950/90 backdrop-blur-sm"></div>
+
+        <div
+          class="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden"
+          @click.stop
+        >
+          <div class="flex items-center justify-between p-6 border-b border-zinc-800 bg-zinc-950">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-cyan-500 text-zinc-950 flex items-center justify-center rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M9 12l2 2 4-4m6 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-xl font-black text-white uppercase tracking-widest">
+                  {{ $t('discovered_modal.title') }}
+                </h2>
+                <p class="text-xs font-mono text-zinc-500">
+                  {{ $t('discovered_modal.total_entries') }}: {{ discovery.discoveredCount.value }}
+                </p>
+              </div>
+            </div>
+
+            <button
+              class="p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-500 hover:text-white hover:border-zinc-700 transition-colors"
+              @click="emit('close')"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+
+          <div class="p-6 flex-1 overflow-hidden flex flex-col gap-6">
+            <div class="flex flex-col sm:flex-row gap-4 justify-between flex-shrink-0">
+              <div class="relative w-full sm:w-96">
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  :placeholder="$t('discovered_modal.search_placeholder')"
+                  class="w-full bg-zinc-950 border border-zinc-800 text-white font-mono text-sm px-4 py-3 pl-10 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
+                />
+                <svg
+                  class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+              </div>
+
+              <div class="flex gap-2">
+                <button
+                  v-if="discovery.discoveredCount.value"
+                  class="px-4 py-2 border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500 text-[10px] font-bold uppercase tracking-widest rounded-xl transition-colors flex items-center gap-2"
+                  @click="clearAll"
+                >
+                  {{ $t('discovered_modal.purge_all') }}
+                </button>
+              </div>
+            </div>
+
+            <div
+              v-if="filtered.length === 0"
+              class="flex-1 flex flex-col items-center justify-center py-12 text-center bg-zinc-950 border border-zinc-800 rounded-xl"
+            >
+              <p class="text-zinc-600 font-mono text-sm uppercase tracking-widest">
+                {{ $t('discovered_modal.no_records') }}
+              </p>
+            </div>
+
+            <div v-else class="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-2">
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div
+                  v-for="g in filtered"
+                  :key="g.id"
+                  class="flex bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden group hover:border-zinc-700 transition-all h-32"
+                >
+                  <div class="w-32 h-full flex-shrink-0 bg-zinc-900">
+                    <img
+                      :src="detailsById.get(g.id)?.background_image || '/placeholder-game.jpg'"
+                      class="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity"
+                    />
+                  </div>
+
+                  <div class="p-4 flex-1 flex flex-col justify-between min-w-0">
+                    <div>
+                      <h3 class="text-white font-bold text-sm truncate uppercase tracking-tight">
+                        {{ g.name }}
+                      </h3>
+                      <p class="text-[10px] text-zinc-500 font-mono mt-1">
+                        {{
+                          detailsById.get(g.id)?.released
+                            ? formatDate(detailsById.get(g.id)?.released, locale)
+                            : `#${g.id}`
+                        }}
+                      </p>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                      <span
+                        v-if="typeof detailsById.get(g.id)?.rating === 'number'"
+                        class="text-[10px] font-bold text-cyan-400 font-mono flex items-center gap-1 bg-zinc-900 px-2 py-1 rounded"
+                      >
+                        ★ {{ Number(detailsById.get(g.id)?.rating).toFixed(1) }}
+                      </span>
+                      <span v-else class="text-[10px] text-zinc-600 font-mono bg-zinc-900 px-2 py-1 rounded">
+                        #{{ g.id }}
+                      </span>
+
+                      <button
+                        class="p-1.5 text-zinc-600 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
+                        :title="$t('discovered_modal.delete_record')"
+                        @click="removeOne(g.id)"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          ></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+</template>
+
+<style scoped>
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+.fade-enter-active .relative, .fade-leave-active .relative { transition: all 0.2s ease; }
+.fade-enter-from .relative, .fade-leave-to .relative { transform: scale(0.98) translateY(10px); }
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+</style>
+

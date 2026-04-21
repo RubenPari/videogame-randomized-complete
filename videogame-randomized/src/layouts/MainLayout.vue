@@ -11,16 +11,23 @@ const SaveGamesModal = defineAsyncComponent(() =>
   import('@/components/SaveGamesModal.vue')
 )
 
+const DiscoveredTitlesModal = defineAsyncComponent(() =>
+  import('@/components/DiscoveredTitlesModal.vue')
+)
+
 const { t } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
 const toastStore = useToastStore()
 
 const showSavedGamesModal = ref(false)
+const showDiscoveredTitlesModal = ref(false)
 const showChangePassword = ref(false)
 
 const openVault = () => (showSavedGamesModal.value = true)
 const closeVault = () => (showSavedGamesModal.value = false)
+const openDiscoveredTitles = () => (showDiscoveredTitlesModal.value = true)
+const closeDiscoveredTitles = () => (showDiscoveredTitlesModal.value = false)
 const openChangePassword = () => (showChangePassword.value = true)
 
 const handleLogout = () => {
@@ -34,6 +41,7 @@ const handleLogout = () => {
   <div class="min-h-screen bg-zinc-950 text-zinc-300 font-sans selection:bg-cyan-500/30">
     <AppHeader
       @open-vault="openVault"
+      @open-discovered="openDiscoveredTitles"
       @open-change-password="openChangePassword"
       @logout="handleLogout"
     />
@@ -46,6 +54,12 @@ const handleLogout = () => {
       v-if="showSavedGamesModal"
       :show="showSavedGamesModal"
       @close="closeVault"
+    />
+
+    <DiscoveredTitlesModal
+      v-if="showDiscoveredTitlesModal"
+      :show="showDiscoveredTitlesModal"
+      @close="closeDiscoveredTitles"
     />
 
     <ChangePasswordModal

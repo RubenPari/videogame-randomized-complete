@@ -1,7 +1,8 @@
 {
   "nav": {
     "home": "Home",
-    "vault": "Vault"
+    "vault": "Vault",
+    "discovered": "Discovered"
   },
   "home": {
     "title": "Unleash Your Next Adventure",
@@ -128,6 +129,15 @@
     "no_records": "No matching records found in vault.",
     "confirm_purge": "Initiate purge of all vault records?",
     "delete_record": "Delete Record"
+  },
+  "discovered_modal": {
+    "title": "Discovered Titles",
+    "total_entries": "Total Entries",
+    "search_placeholder": "SEARCH TITLES...",
+    "purge_all": "Purge All",
+    "no_records": "No discovered titles found.",
+    "confirm_purge": "Initiate purge of all discovered titles?",
+    "delete_record": "Remove Title"
   },
   "placeholder": {
     "loading": "Initializing Protocol...",

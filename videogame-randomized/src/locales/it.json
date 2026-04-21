@@ -1,7 +1,8 @@
 {
   "nav": {
     "home": "Home",
-    "vault": "Cassaforte"
+    "vault": "Cassaforte",
+    "discovered": "Scoperti"
   },
   "home": {
     "title": "Scopri la tua prossima Avventura",
@@ -132,6 +133,15 @@
     "no_records": "Nessun record trovato nella cassaforte.",
     "confirm_purge": "Avviare la cancellazione di tutti i record della cassaforte?",
     "delete_record": "Elimina Record"
+  },
+  "discovered_modal": {
+    "title": "Titoli Scoperti",
+    "total_entries": "Totale Voci",
+    "search_placeholder": "CERCA TITOLI...",
+    "purge_all": "Cancella Tutto",
+    "no_records": "Nessun titolo scoperto trovato.",
+    "confirm_purge": "Avviare la cancellazione di tutti i titoli scoperti?",
+    "delete_record": "Rimuovi Titolo"
   },
   "placeholder": {
     "loading": "Inizializzazione Protocollo...",

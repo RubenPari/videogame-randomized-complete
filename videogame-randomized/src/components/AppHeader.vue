@@ -2,12 +2,14 @@
 import { ref } from 'vue'
 import { useVaultStore } from '@/stores/useVaultStore'
 import { useAuthStore } from '@/stores/useAuthStore'
+import { useGameDiscovery } from '@/composables/useGameDiscovery'
 import LanguageSwitcher from '@/components/base/LanguageSwitcher.vue'
 
-const emit = defineEmits(['open-vault', 'open-change-password', 'logout'])
+const emit = defineEmits(['open-vault', 'open-discovered', 'open-change-password', 'logout'])
 
 const vault = useVaultStore()
 const authStore = useAuthStore()
+const discovery = useGameDiscovery()
 const showUserMenu = ref(false)
 
 const toggleUserMenu = () => (showUserMenu.value = !showUserMenu.value)
@@ -44,6 +46,19 @@ class="group flex items-center gap-2 px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 b
             <span class="font-bold text-white uppercase text-sm tracking-wider hidden sm:block">{{ $t('nav.vault') }}</span>
           <span v-if="vault.count > 0" class="flex h-5 w-5 items-center justify-center rounded-md bg-fuchsia-500 text-[10px] font-black text-zinc-950 ml-1">
             {{ vault.count }}
+          </span>
+        </button>
+
+        <!-- Discovered Titles Button -->
+        <button
+class="group flex items-center gap-2 px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-cyan-500/50 rounded-xl transition-all"
+          @click="emit('open-discovered')">
+          <svg class="w-5 h-5 text-cyan-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M9 12l2 2 4-4m6 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="font-bold text-white uppercase text-sm tracking-wider hidden sm:block">{{ $t('nav.discovered') }}</span>
+          <span v-if="discovery.discoveredCount.value > 0" class="flex h-5 w-5 items-center justify-center rounded-md bg-cyan-400 text-[10px] font-black text-zinc-950 ml-1">
+            {{ discovery.discoveredCount.value }}
           </span>
         </button>
 

@@ -8,34 +8,37 @@ import httpClient from '@/services/httpClient'
  * generation, history, and description fetching/translation.
  * Integrates with persistent discovery log for cross-session exclusion.
  */
+
+// Module-scoped state so multiple callers share the same discovery session/log.
+const currentGame = ref(null)
+const gameDescription = ref('')
+const isLoading = ref(false)
+const error = ref(null)
+const gameHistory = ref([]) // Current session history
+const pastHistory = ref([]) // Loaded from server (previous sessions)
+const totalGamesCount = ref(0)
+
+const highRatingPoolCache = ref(new Map())
+
+// Centralized filters using reactive object
+const filters = reactive({
+  genre: '',
+  platforms: [],
+  minRating: 0,
+  startYear: 2010,
+  endYear: new Date().getFullYear(),
+})
+
+// All excluded IDs = current session + past sessions
+const allExcludedIds = computed(() => {
+  const currentIds = gameHistory.value.map((g) => g.id)
+  const pastIds = pastHistory.value.map((g) => g.id)
+  return new Set([...currentIds, ...pastIds])
+})
+
+const discoveredCount = computed(() => pastHistory.value.length)
+
 export function useGameDiscovery() {
-  // Reactive state
-  const currentGame = ref(null)
-  const gameDescription = ref('')
-  const isLoading = ref(false)
-  const error = ref(null)
-  const gameHistory = ref([])       // Current session history
-  const pastHistory = ref([])        // Loaded from server (previous sessions)
-  const totalGamesCount = ref(0)
-
-  const highRatingPoolCache = ref(new Map())
-
-  // All excluded IDs = current session + past sessions
-  const allExcludedIds = computed(() => {
-    const currentIds = gameHistory.value.map(g => g.id)
-    const pastIds = pastHistory.value.map(g => g.id)
-    return new Set([...currentIds, ...pastIds])
-  })
-
-  // Centralized filters using reactive object
-  const filters = reactive({
-    genre: '',
-    platforms: [],
-    minRating: 0,
-    startYear: 2010,
-    endYear: new Date().getFullYear()
-  })
-
   /**
    * Load discovery log from the server (previous sessions)
    */
@@ -59,6 +62,26 @@ export function useGameDiscovery() {
     } catch (err) {
       console.error('Failed to clear discovery log:', err)
       throw err
+    }
+  }
+
+  /**
+   * Remove a single discovery log entry (and allow it to reappear immediately)
+   * - Removes from server (past sessions)
+   * - Removes from current session history (in-memory)
+   */
+  const removeDiscovered = async (gameId) => {
+    const id = Number(gameId)
+    if (!Number.isFinite(id)) return
+
+    try {
+      await httpClient.delete(`/discovery-log/${id}`)
+    } catch (err) {
+      console.error('Failed to remove discovery log entry:', err)
+      throw err
+    } finally {
+      pastHistory.value = pastHistory.value.filter((g) => g?.id !== id)
+      gameHistory.value = gameHistory.value.filter((g) => g?.id !== id)
     }
   }
 
@@ -92,7 +115,10 @@ export function useGameDiscovery() {
 
       const buildFilterKey = (ordering) => {
         const genre = filters.genre || ''
-        const platforms = (filters.platforms || []).slice().sort((a, b) => a - b).join(',')
+        const platforms = (filters.platforms || [])
+          .slice()
+          .sort((a, b) => a - b)
+          .join(',')
         const startYear = filters.startYear ?? ''
         const endYear = filters.endYear ?? ''
         const minRating = Number(filters.minRating || 0).toFixed(1)
@@ -320,7 +346,7 @@ export function useGameDiscovery() {
       // Update history and auto-save to server
       const entry = { id: selected.id, name: selected.name }
       gameHistory.value.push(entry)
-      if (!pastHistory.value.some(p => p.id === entry.id)) {
+      if (!pastHistory.value.some((p) => p.id === entry.id)) {
         pastHistory.value = [...pastHistory.value, entry]
       }
       try {
@@ -393,12 +419,14 @@ export function useGameDiscovery() {
     error,
     gameHistory,
     pastHistory,
+    discoveredCount,
     totalGamesCount,
     filters,
     generateGame,
     loadGameById,
     clearHistory,
     loadPastHistory,
-    clearPastHistory
+    clearPastHistory,
+    removeDiscovered,
   }
 }

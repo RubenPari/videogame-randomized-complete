@@ -1,7 +1,8 @@
 {
   "nav": {
     "home": "Inicio",
-    "vault": "Bóveda"
+    "vault": "Bóveda",
+    "discovered": "Descubiertos"
   },
   "home": {
     "title": "Descubre tu Próxima Aventura",
@@ -132,6 +133,15 @@
     "no_records": "No se encontraron registros en la bóveda.",
     "confirm_purge": "¿Iniciar purga de todos los registros de la bóveda?",
     "delete_record": "Eliminar Registro"
+  },
+  "discovered_modal": {
+    "title": "Títulos Descubiertos",
+    "total_entries": "Total de Entradas",
+    "search_placeholder": "BUSCAR TÍTULOS...",
+    "purge_all": "Purgar Todo",
+    "no_records": "No se encontraron títulos descubiertos.",
+    "confirm_purge": "¿Iniciar purga de todos los títulos descubiertos?",
+    "delete_record": "Eliminar Título"
   },
   "placeholder": {
     "loading": "Inicializando Protocolo...",
