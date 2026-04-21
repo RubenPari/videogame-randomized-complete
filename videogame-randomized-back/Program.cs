@@ -38,7 +38,9 @@ var emailFromEmail = GetEnvOrDefault("EMAIL_FROM_EMAIL", "hello@example.com");
 var emailFromName = GetEnvOrDefault("EMAIL_FROM_NAME", "VideoGame Randomizer");
 var emailApiToken = GetEnvOrDefault("EMAIL_API_TOKEN", "");
 
-var corsOriginsEnv = GetEnvOrDefault("CORS_ALLOWED_ORIGINS", "");
+var corsOriginsEnv = GetEnvOrDefault(
+    "CORS_ALLOWED_ORIGINS",
+    "http://localhost:5173,http://localhost:3000");
 var allowedOrigins = string.IsNullOrWhiteSpace(corsOriginsEnv) 
     ? Array.Empty<string>() 
     : corsOriginsEnv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -125,6 +127,21 @@ builder.Services.AddAuthorization();
 
 // Add HttpClient for Mailtrap API
 builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("rawg", client =>
+{
+    client.BaseAddress = new Uri("https://api.rawg.io/api/");
+    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+});
+builder.Services.AddHttpClient("googleTranslate", client =>
+{
+    client.BaseAddress = new Uri("https://translation.googleapis.com/");
+    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+});
+builder.Services.AddHttpClient("youtube", client =>
+{
+    client.BaseAddress = new Uri("https://www.googleapis.com/youtube/v3/");
+    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+});
 
 // Configure Email settings
 builder.Services.Configure<EmailSettings>(options =>
@@ -139,6 +156,9 @@ builder.Services.AddScoped<GamesService>();
 builder.Services.AddScoped<IDiscoveryLogService, DiscoveryLogService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<RawgService>();
+builder.Services.AddScoped<TranslateService>();
+builder.Services.AddScoped<YoutubeService>();
 builder.Services.AddScoped<GameMapper>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateGameDto>();
 builder.Services.AddFluentValidationAutoValidation();
@@ -223,6 +243,3 @@ app.MapControllers();
 app.MapGet("/", () => "Hello World!");
 
 app.Run();
-
-/// <summary>Exposes <see cref="Program"/> for <c>WebApplicationFactory&lt;Program&gt;</c> in integration tests.</summary>
-public partial class Program;
