@@ -74,5 +74,6 @@ Vue Router guards redirect unauthenticated users to `/login` and authenticated u
 - Never commit `.env` or `.env.local` files
 
 ## Environment Variables
-- **Frontend:** `VITE_API_BASE_URL`, `VITE_RAWG_API_KEY`, `VITE_YOUTUBE_API_KEY`, `VITE_GOOGLE_TRANSLATE_API_KEY` (see `.env.example`)
-- **Backend:** DB connection, JWT config, email/Mailtrap config, CORS origins (see `.env.example` in backend dir)
+- **Canonical files:** root `.env` for local values and root `.env.example` as template
+- **Frontend:** `VITE_API_BASE_URL`, `VITE_RAWG_API_KEY`, `VITE_YOUTUBE_API_KEY`, `VITE_GOOGLE_TRANSLATE_API_KEY`
+- **Backend:** DB connection, JWT config, email/Mailtrap config, CORS origins

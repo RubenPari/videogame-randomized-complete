@@ -160,7 +160,7 @@ private static async Task<Ok<List<ItemDto>>> GetItems(ItemService service)
 **Required**:
 - Node.js 16+ for frontend
 - .NET 10 SDK for backend
-- RAWG API key (set in `videogame-randomized/.env.local`)
+- RAWG API key (set in root `.env`)
 - Google Cloud credentials for Firestore backend
 
 **Frontend env**:

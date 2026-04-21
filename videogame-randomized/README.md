@@ -51,13 +51,9 @@ npm install
 
 ### 3. Configurare le Variabili di Ambiente
 
-Copia il file `.env.example` a `.env.local`:
+Usa il file `.env` nella root del repository (template: `.env.example` nella root).
 
-```bash
-cp .env.example .env.local
-```
-
-Poi modifica `.env.local` aggiungendo la tua chiave API RAWG:
+Esempio minimo:
 
 ```env
 VITE_RAWG_API_KEY=YOUR_RAWG_API_KEY_HERE
