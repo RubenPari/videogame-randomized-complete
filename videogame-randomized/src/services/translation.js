@@ -9,12 +9,7 @@
  * - Handling of authentication and rate limiting errors
  */
 
-// Import axios for HTTP requests
-import axios from 'axios'
-
-// Configuration for Google Cloud Translation API
-const GOOGLE_TRANSLATE_API_URL = 'https://translation.googleapis.com/language/translate/v2'  // Google API endpoint
-const GOOGLE_TRANSLATE_API_KEY = import.meta.env.VITE_GOOGLE_TRANSLATE_API_KEY || ''          // API key from environment variable
+import httpClient from './httpClient'
 
 /**
  * Translation service that uses Google Cloud Translation API
@@ -39,27 +34,12 @@ const translationService = {
       return 'Description not available.'
     }
 
-    // Checks if the API key is configured in environment variables
-    if (!GOOGLE_TRANSLATE_API_KEY) {
-      console.error('Google Translate API key not configured')
-      // If the API key is missing, use the fallback translation
-      return this.fallbackTranslation(text)
-    }
-
     try {
-      // Builds the complete URL with the API key as a query parameter
-      const url = `${GOOGLE_TRANSLATE_API_URL}?key=${GOOGLE_TRANSLATE_API_KEY}`
-
-      // Prepares the request data according to Google API specifications
-      const requestData = {
-        q: text,               // Text to translate
-        source: sourceLang,    // Source language
-        target: targetLang,    // Target language
-        format: 'text',        // Text format (text or html)
-      }
-
-      // Makes the POST request to Google Cloud Translation API
-      const response = await axios.post(url, requestData)
+      const response = await httpClient.post('/translate', {
+        text,
+        source: sourceLang,
+        target: targetLang,
+      })
 
       // Extracts the translated text from the response, verifying the data structure
       // Google's response has the structure: { data: { translations: [{ translatedText: "..." }] } }
@@ -76,7 +56,7 @@ const translationService = {
         console.error('Invalid response from Google Cloud Translation API:', response.data)
       }
     } catch (error) {
-      console.error('Error during translation with Google Cloud Translation API:', error)
+      console.error('Error during translation with backend proxy:', error)
 
       // Handles specific errors from Google Cloud Translation API
       if (error.response) {

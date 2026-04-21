@@ -8,25 +8,15 @@
  * - Handling network and translation errors
  */
 
-// Import axios for HTTP requests
-import axios from 'axios'
 // Import translation service to convert texts to Italian
 import translationService from './translation'
+import httpClient from './httpClient'
 
-// Constants for RAWG API configuration
-const API_KEY = import.meta.env.VITE_RAWG_API_KEY || 'YOUR_RAWG_API_KEY' // API key from environment variable
-const BASE_URL = 'https://api.rawg.io/api' // Base URL for RAWG API
-
-/**
- * Configured Axios instance for RAWG API
- * Automatically includes API key in all requests
- */
-const apiClient = axios.create({
-  baseURL: BASE_URL, // Base URL for all requests
-  params: {
-    key: API_KEY, // API key automatically added to every request
+const rawgClient = {
+  get(path, config) {
+    return httpClient.get(`/rawg${path}`, config)
   },
-})
+}
 
 /**
  * Object with all methods for interacting with the RAWG API
@@ -41,7 +31,7 @@ export default {
    * const genres = response.data.results
    */
   getGenres() {
-    return apiClient.get('/genres')
+    return rawgClient.get('/genres')
   },
 
   /**
@@ -52,7 +42,7 @@ export default {
    * const platforms = response.data.results
    */
   getPlatforms() {
-    return apiClient.get('/platforms')
+    return rawgClient.get('/platforms')
   },
 
   /**
@@ -61,16 +51,14 @@ export default {
    * @param {string} params.genres - Genre IDs separated by comma
    * @param {string} params.platforms - Platform IDs separated by comma
    * @param {string} params.dates - Date range (YYYY-MM-DD,YYYY-MM-DD)
-   * @param {string} params.metacritic - Metacritic score range (min,max)
-   * @param {string} params.ordering - Sorting criteria (-rating, -released, etc.)
    * @param {number} params.page_size - Number of results per page
    * @returns {Promise} Promise that resolves with the list of filtered games
    * @example
-   * const response = await api.getGames({ genres: '4,51', metacritic: '80,100' })
+   * const response = await api.getGames({ genres: '4,51' })
    * const games = response.data.results
    */
   getGames(params = {}) {
-    return apiClient.get('/games', {
+    return rawgClient.get('/games', {
       params: {
         ...params, // Spread the received parameters
       },
@@ -87,7 +75,7 @@ export default {
    * const gameDetails = response.data
    */
   getGameDetails(gameId) {
-    return apiClient.get(`/games/${gameId}`)
+    return rawgClient.get(`/games/${gameId}`)
   },
 
   /**
@@ -96,7 +84,7 @@ export default {
    * @returns {Promise} Promise that resolves with the game screenshots
    */
   getGameScreenshots(gameId) {
-    return apiClient.get(`/games/${gameId}/screenshots`)
+    return rawgClient.get(`/games/${gameId}/screenshots`)
   },
 
   /**
@@ -105,7 +93,7 @@ export default {
    * @returns {Promise} Promise that resolves with the game movies
    */
   getGameMovies(gameId) {
-    return apiClient.get(`/games/${gameId}/movies`)
+    return rawgClient.get(`/games/${gameId}/movies`)
   },
 
   /**
@@ -114,25 +102,13 @@ export default {
    * @returns {Promise<string|null>} YouTube video ID or null
    */
   async searchYouTubeTrailer(gameName) {
-    const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
-    if (!YOUTUBE_API_KEY || !gameName) return null
+    if (!gameName) return null
 
     try {
-      const response = await axios.get('https://www.googleapis.com/youtube/v3/search', {
-        params: {
-          part: 'snippet',
-          q: `${gameName} official trailer`,
-          type: 'video',
-          maxResults: 1,
-          videoCategoryId: '20', // Gaming category
-          key: YOUTUBE_API_KEY,
-        },
+      const response = await httpClient.get('/youtube/search', {
+        params: { q: `${gameName} official trailer` },
       })
-      const items = response.data?.items
-      if (items && items.length > 0) {
-        return items[0].id.videoId
-      }
-      return null
+      return response.data?.videoId || null
     } catch (error) {
       console.error('YouTube trailer search failed:', error)
       return null
