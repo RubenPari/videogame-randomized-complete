@@ -1,22 +1,16 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { useVaultStore } from '@/stores/useVaultStore'
-import { useToastStore } from '@/stores/useToastStore'
 import { useGameDiscovery } from '@/composables/useGameDiscovery'
 import apiService from '@/services/api'
-
-const { t } = useI18n()
 
 // Components
 import FilterSection from '@/components/FilterSection.vue'
 import GameCard from '@/components/GameCard.vue'
-import GameHistory from '@/components/GameHistory.vue'
 import GameStatePlaceholder from '@/components/base/GameStatePlaceholder.vue'
 
 // Store & Composable
 const vault = useVaultStore()
-const toastStore = useToastStore()
 const discovery = useGameDiscovery()
 
 // Local State
@@ -43,14 +37,6 @@ onMounted(async () => {
   }
 })
 
-const handleClearPastHistory = async () => {
-  try {
-    await discovery.clearPastHistory()
-    toastStore.showToast(t('home.history_cleared'), 'success')
-  } catch {
-    toastStore.showToast(t('home.history_clear_error'), 'error')
-  }
-}
 </script>
 
 <template>
@@ -88,15 +74,6 @@ const handleClearPastHistory = async () => {
           :is-loading="false"
         />
       </div>
-
-      <!-- History -->
-      <GameHistory
-        :game-history="discovery.gameHistory.value"
-        :past-history="discovery.pastHistory.value"
-        @clear-history="discovery.clearHistory"
-        @clear-past-history="handleClearPastHistory"
-        @select-game="discovery.loadGameById"
-      />
 
       <!-- Error Reporting -->
       <div v-if="discovery.error.value" class="bg-red-500/10 border-l-2 border-red-500 text-red-400 p-4 rounded-r-xl text-sm font-mono animate-fade-in">
