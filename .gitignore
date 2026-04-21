@@ -6,3 +6,5 @@ videogame-randomized/.env.production
 .env
 .idea/
 .kilo/
+.cursor/
+.claude/
