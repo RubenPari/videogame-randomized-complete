@@ -34,6 +34,20 @@ const authService = {
   },
 
   /**
+   * Resend email confirmation for an existing unconfirmed account
+   * @param {string} email
+   * @param {string} password
+   * @returns {Promise<{message: string, confirmationEmailSent: boolean}>}
+   */
+  async resendConfirmationEmail(email, password) {
+    const response = await httpClient.post('/auth/resend-confirmation', {
+      email,
+      password,
+    })
+    return response.data
+  },
+
+  /**
    * Confirm email with userId and token
    * @param {string} userId
    * @param {string} token

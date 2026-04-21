@@ -60,13 +60,7 @@
     "hardware": "Hardware",
     "selected": "SEL",
     "all": "Tutti",
-    "none": "Nessuno",
-    "sort_protocol": "Protocollo di Ordinamento",
-    "highest_rating": "Voto Più Alto",
-    "lowest_rating": "Voto Più Basso",
-    "latest_release": "Uscita Più Recente",
-    "earliest_release": "Uscita Più Antica",
-    "most_popular": "Più Popolare"
+    "none": "Nessuno"
   },
   "history": {
     "session_log": "Log Sessione",
@@ -117,6 +111,10 @@
     "email_confirmed": "Email Confermata!",
     "email_confirmed_desc": "La tua email è stata verificata. Ora puoi accedere.",
     "confirmation_failed": "Conferma Fallita",
+    "resend_confirmation": "Reinvia email di conferma",
+    "resending_confirmation": "Reinvio in corso...",
+    "confirmation_resent": "Email di conferma inviata.",
+    "confirmation_resend_failed": "Non siamo riusciti a inviare l'email di conferma. Riprova più tardi.",
     "password_reset_success": "Password Reimpostata!",
     "password_reset_desc": "La tua password è stata reimpostata con successo.",
     "invalid_reset_link": "Link di reset non valido. Richiedine uno nuovo.",

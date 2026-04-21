@@ -25,3 +25,17 @@ export function getApiErrorMessage(err, fallback) {
   }
   return fallback
 }
+
+const LOGIN_EMAIL_NOT_CONFIRMED_TYPE = 'urn:videogame-randomizer:login:email-not-confirmed'
+
+/**
+ * Detects a failed login due to unconfirmed email (Problem Details `type`).
+ * @param {unknown} err
+ * @returns {boolean}
+ */
+export function isEmailNotConfirmedLoginError(err) {
+  const ax = err && typeof err === 'object' && 'response' in err ? err.response : null
+  const data = ax && typeof ax === 'object' && 'data' in ax ? ax.data : null
+  const type = data && typeof data === 'object' && 'type' in data ? data.type : null
+  return type === LOGIN_EMAIL_NOT_CONFIRMED_TYPE
+}

@@ -60,13 +60,7 @@
     "hardware": "Hardware",
     "selected": "SEL",
     "all": "All",
-    "none": "None",
-    "sort_protocol": "Sort Protocol",
-    "highest_rating": "Highest Rating",
-    "lowest_rating": "Lowest Rating",
-    "latest_release": "Latest Release",
-    "earliest_release": "Earliest Release",
-    "most_popular": "Most Popular"
+    "none": "None"
   },
   "history": {
     "session_log": "Session Log",

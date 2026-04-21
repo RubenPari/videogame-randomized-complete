@@ -1,10 +1,11 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useToastStore } from '@/stores/useToastStore'
-import { getApiErrorMessage } from '@/utils/apiError'
+import authService from '@/services/auth'
+import { getApiErrorMessage, isEmailNotConfirmedLoginError } from '@/utils/apiError'
 
 const { t } = useI18n()
 
@@ -16,9 +17,18 @@ const email = ref('')
 const password = ref('')
 const isLoading = ref(false)
 const error = ref('')
+const showResendConfirmation = ref(false)
+const resendLoading = ref(false)
+
+const canResendConfirmation = computed(() => email.value.trim().length > 0 && password.value.trim().length > 0)
+
+watch([email, password], () => {
+  showResendConfirmation.value = false
+})
 
 const handleLogin = async () => {
   error.value = ''
+  showResendConfirmation.value = false
   isLoading.value = true
   try {
     await authStore.login(email.value, password.value)
@@ -26,8 +36,28 @@ const handleLogin = async () => {
     router.push('/')
   } catch (err) {
     error.value = getApiErrorMessage(err, t('error.generic'))
+    if (isEmailNotConfirmedLoginError(err)) {
+      showResendConfirmation.value = true
+    }
   } finally {
     isLoading.value = false
+  }
+}
+
+const handleResendConfirmation = async () => {
+  if (!canResendConfirmation.value) return
+  resendLoading.value = true
+  try {
+    const result = await authService.resendConfirmationEmail(email.value, password.value)
+    if (result?.confirmationEmailSent === false) {
+      toastStore.showToast(t('auth.confirmation_resend_failed'), 'error')
+    } else {
+      toastStore.showToast(t('auth.confirmation_resent'), 'success')
+    }
+  } catch (err) {
+    toastStore.showToast(getApiErrorMessage(err, t('error.generic')), 'error')
+  } finally {
+    resendLoading.value = false
   }
 }
 </script>
@@ -96,10 +126,21 @@ const handleLogin = async () => {
         </div>
 
         <!-- Forgot Password -->
-        <div class="text-right">
+        <div class="flex items-center justify-between gap-4">
+          <button
+            v-if="showResendConfirmation"
+            type="button"
+            :disabled="resendLoading || !canResendConfirmation"
+            class="text-sm text-fuchsia-400 hover:text-fuchsia-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            @click="handleResendConfirmation"
+          >
+            <span v-if="!resendLoading">{{ $t('auth.resend_confirmation') }}</span>
+            <span v-else>{{ $t('auth.resending_confirmation') }}</span>
+          </button>
+
           <router-link
             to="/forgot-password"
-            class="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+            class="text-sm text-cyan-400 hover:text-cyan-300 transition-colors ml-auto"
           >
             {{ $t('auth.forgot_password') }}
           </router-link>

@@ -118,22 +118,6 @@ v-model="filters.platforms" type="checkbox" :value="platform.id"
         </div>
       </div>
 
-      <!-- Sorting -->
-      <div class="space-y-2">
-        <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{{ $t('filters.sort_protocol') }}</label>
-        <div class="relative">
-          <select v-model="filters.ordering" class="w-full appearance-none bg-zinc-950 border border-zinc-800 text-zinc-300 text-sm px-4 py-3 rounded-xl focus:outline-none focus:border-cyan-500 transition-colors">
-            <option value="-rating">{{ $t('filters.highest_rating') }}</option>
-            <option value="rating">{{ $t('filters.lowest_rating') }}</option>
-            <option value="-released">{{ $t('filters.latest_release') }}</option>
-            <option value="released">{{ $t('filters.earliest_release') }}</option>
-            <option value="-added">{{ $t('filters.most_popular') }}</option>
-          </select>
-          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-600">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
-          </div>
-        </div>
-      </div>
     </div>
 
     <button

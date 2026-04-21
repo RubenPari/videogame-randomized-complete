@@ -60,13 +60,7 @@
     "hardware": "Hardware",
     "selected": "SEL",
     "all": "Todos",
-    "none": "Ninguno",
-    "sort_protocol": "Protocolo de Ordenación",
-    "highest_rating": "Mayor Valoración",
-    "lowest_rating": "Menor Valoración",
-    "latest_release": "Último Lanzamiento",
-    "earliest_release": "Primer Lanzamiento",
-    "most_popular": "Más Popular"
+    "none": "Ninguno"
   },
   "history": {
     "session_log": "Registro de Sesión",
@@ -117,6 +111,10 @@
     "email_confirmed": "¡Correo Confirmado!",
     "email_confirmed_desc": "Tu correo ha sido verificado. Ahora puedes iniciar sesión.",
     "confirmation_failed": "Confirmación Fallida",
+    "resend_confirmation": "Reenviar correo de confirmación",
+    "resending_confirmation": "Reenviando confirmación...",
+    "confirmation_resent": "Correo de confirmación enviado.",
+    "confirmation_resend_failed": "No pudimos enviar el correo de confirmación. Inténtalo de nuevo más tarde.",
     "password_reset_success": "¡Contraseña Restablecida!",
     "password_reset_desc": "Tu contraseña ha sido restablecida exitosamente.",
     "invalid_reset_link": "Enlace de restablecimiento inválido. Solicita uno nuevo.",
