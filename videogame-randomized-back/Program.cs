@@ -127,6 +127,7 @@ builder.Services.AddAuthorization();
 
 // Add HttpClient for Mailtrap API
 builder.Services.AddHttpClient();
+builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient("rawg", client =>
 {
     client.BaseAddress = new Uri("https://api.rawg.io/api/");
@@ -154,6 +155,7 @@ builder.Services.Configure<EmailSettings>(options =>
 // Add services to the container
 builder.Services.AddScoped<GamesService>();
 builder.Services.AddScoped<IDiscoveryLogService, DiscoveryLogService>();
+builder.Services.AddScoped<DiscoveryService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<RawgService>();
