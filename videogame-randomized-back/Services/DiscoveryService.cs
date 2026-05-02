@@ -6,6 +6,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Primitives;
 using videogame_randomized_back.Data;
 using videogame_randomized_back.DTOs;
+using videogame_randomized_back.Services.Discovery;
 
 namespace videogame_randomized_back.Services;
 
@@ -15,15 +16,6 @@ public class DiscoveryService(
     IRawgService rawg,
     IMemoryCache cache)
 {
-    private const int PageSize = 40;
-    private const int MaxUniformFallbackPages = 3;
-    private const int MaxHighRatingScanPages = 10;
-    private const int HighRatingPoolThreshold = 100;
-    private const int HighRatingFallbackPages = 5;
-    private const int MaxUniformRepicks = 5;
-    private const int MaxHighRatingRepicks = 5;
-    private static readonly TimeSpan CountCacheTtl = TimeSpan.FromMinutes(5);
-
     private sealed class DiscoveryMetrics
     {
         public int RawgCalls { get; set; }
@@ -96,27 +88,13 @@ public class DiscoveryService(
         return set;
     }
 
-    private static Dictionary<string, string?> BuildBaseParams(DiscoveryRandomRequestDto request)
-    {
-        var dict = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
-
-        if (!string.IsNullOrWhiteSpace(request.Genre)) dict["genres"] = request.Genre;
-        if (!string.IsNullOrWhiteSpace(request.Platforms)) dict["platforms"] = request.Platforms;
-
-        var startYear = request.StartYear.GetValueOrDefault(2010);
-        var endYear = request.EndYear.GetValueOrDefault(DateTime.UtcNow.Year);
-        dict["dates"] = $"{startYear:D4}-01-01,{endYear:D4}-12-31";
-
-        return dict;
-    }
-
     private async Task<DiscoveryRandomResponseDto> GetRandomUniformAsync(
         DiscoveryRandomRequestDto request,
         HashSet<int> excludedIds,
         DiscoveryMetrics metrics,
         CancellationToken cancellationToken)
     {
-        var baseParams = BuildBaseParams(request);
+        var baseParams = DiscoveryQueryParameters.BuildBase(request);
 
         var count = await GetCountAsync(baseParams, metrics, cancellationToken);
         if (count <= 0)
@@ -133,35 +111,38 @@ public class DiscoveryService(
         var anyUpstreamError = false;
 
         var randomOffset = Random.Shared.NextInt64(0, count);
-        var targetPage = (int)(randomOffset / PageSize) + 1;
-        var targetIndex = (int)(randomOffset % PageSize);
+        var targetPage = (int)(randomOffset / DiscoveryConstants.PageSize) + 1;
+        var targetIndex = (int)(randomOffset % DiscoveryConstants.PageSize);
 
-        var (primaryStatus, primaryBody) = await FetchPageAsync(baseParams, "", targetPage, PageSize, metrics, cancellationToken);
-        if (IsUpstreamError(primaryStatus))
+        var (primaryStatus, primaryBody) = await FetchPageAsync(
+            baseParams, "", targetPage, DiscoveryConstants.PageSize, metrics, cancellationToken);
+        if (RawgDiscoveryJson.IsUpstreamError(primaryStatus))
         {
             anyUpstreamError = true;
         }
         else if (primaryStatus is >= 200 and < 300)
         {
-            ParseResultsIntoList(primaryBody, allResults, targetIndex);
+            RawgDiscoveryJson.AppendResultsToList(primaryBody, allResults, targetIndex);
         }
 
         if (allResults.Count == 0 && !anyUpstreamError)
         {
-            var fallbackPages = GenerateFallbackPages(count, targetPage, MaxUniformFallbackPages);
-            var fallbackTasks = fallbackPages.Select(p => FetchPageAsync(baseParams, "", p, PageSize, metrics, cancellationToken)).ToArray();
+            var fallbackPages = DiscoveryFallbackPages.Generate(
+                count,
+                targetPage,
+                DiscoveryConstants.MaxUniformFallbackPages,
+                DiscoveryConstants.PageSize);
+            var fallbackTasks = fallbackPages
+                .Select(p => FetchPageAsync(baseParams, "", p, DiscoveryConstants.PageSize, metrics, cancellationToken))
+                .ToArray();
             var fallbackResults = await Task.WhenAll(fallbackTasks);
 
             foreach (var (status, body) in fallbackResults)
             {
                 if (status is >= 200 and < 300)
-                {
-                    ParseResultsIntoList(body, allResults);
-                }
-                else if (IsUpstreamError(status))
-                {
+                    RawgDiscoveryJson.AppendResultsToList(body, allResults);
+                else if (RawgDiscoveryJson.IsUpstreamError(status))
                     anyUpstreamError = true;
-                }
             }
         }
 
@@ -175,7 +156,9 @@ public class DiscoveryService(
             };
         }
 
-        var candidateElements = FilterExcluded(allResults.Select(r => r.Element).ToList(), excludedIds);
+        var candidateElements = RawgDiscoveryJson.FilterExcluded(
+            allResults.Select(r => r.Element).ToList(),
+            excludedIds);
 
         if (candidateElements.Count == 0)
         {
@@ -189,18 +172,15 @@ public class DiscoveryService(
             };
         }
 
-        for (var attempt = 0; attempt < MaxUniformRepicks; attempt++)
-        {
-            var chosen = candidateElements[Random.Shared.Next(0, candidateElements.Count)];
-            if (!TryGetInt(chosen, "id", out var id) || excludedIds.Contains(id))
-            {
-                metrics.Repicks++;
-                continue;
-            }
-
-            var game = JsonSerializer.Deserialize<JsonElement>(chosen.GetRawText());
-            return new DiscoveryRandomResponseDto { Success = true, Game = game };
-        }
+        var repicks = metrics.Repicks;
+        var picked = DiscoveryRandomPicker.TryPickWithRepicks(
+            candidateElements,
+            excludedIds,
+            DiscoveryConstants.MaxUniformRepicks,
+            ref repicks);
+        metrics.Repicks = repicks;
+        if (picked != null)
+            return picked;
 
         return new DiscoveryRandomResponseDto
         {
@@ -217,7 +197,7 @@ public class DiscoveryService(
         CancellationToken cancellationToken)
     {
         var minRating = request.MinRating.GetValueOrDefault(0m);
-        var baseParams = BuildBaseParams(request);
+        var baseParams = DiscoveryQueryParameters.BuildBase(request);
         const string ordering = "-rating";
 
         var pool = new List<JsonElement>();
@@ -225,11 +205,12 @@ public class DiscoveryService(
         var anyAbove = false;
         var anyUpstreamError = false;
 
-        for (var page = 1; page <= MaxHighRatingScanPages; page++)
+        for (var page = 1; page <= DiscoveryConstants.MaxHighRatingScanPages; page++)
         {
-            var (status, body) = await FetchPageAsync(baseParams, ordering, page, PageSize, metrics, cancellationToken);
+            var (status, body) = await FetchPageAsync(
+                baseParams, ordering, page, DiscoveryConstants.PageSize, metrics, cancellationToken);
 
-            if (IsUpstreamError(status))
+            if (RawgDiscoveryJson.IsUpstreamError(status))
             {
                 anyUpstreamError = true;
                 break;
@@ -244,32 +225,29 @@ public class DiscoveryService(
 
             if (resultsEl.GetArrayLength() == 0) break;
 
-            decimal? firstRated = null;
-            foreach (var g in resultsEl.EnumerateArray())
-            {
-                if (!TryGetInt(g, "id", out var id)) continue;
-                var rating = TryGetDecimal(g, "rating");
-                if (!rating.HasValue) continue;
+            HighRatingPageProcessor.CollectFromScanPage(
+                resultsEl,
+                minRating,
+                seen,
+                pool,
+                ref anyAbove,
+                out var firstRated);
 
-                firstRated ??= rating.Value;
-
-                if (rating.Value >= minRating)
-                {
-                    anyAbove = true;
-                    if (seen.Add(id))
-                        pool.Add(g.Clone());
-                }
-            }
-
-            if (pool.Count >= HighRatingPoolThreshold) break;
+            if (pool.Count >= DiscoveryConstants.HighRatingPoolThreshold) break;
             if (firstRated.HasValue && firstRated.Value < minRating) break;
         }
 
-        if (pool.Count < HighRatingPoolThreshold && !anyUpstreamError)
+        if (pool.Count < DiscoveryConstants.HighRatingPoolThreshold && !anyUpstreamError)
         {
-            var scanStartPage = MaxHighRatingScanPages + 1;
-            var fallbackTasks = Enumerable.Range(0, HighRatingFallbackPages)
-                .Select(i => FetchPageAsync(baseParams, ordering, scanStartPage + i, PageSize, metrics, cancellationToken))
+            var scanStartPage = DiscoveryConstants.MaxHighRatingScanPages + 1;
+            var fallbackTasks = Enumerable.Range(0, DiscoveryConstants.HighRatingFallbackPages)
+                .Select(i => FetchPageAsync(
+                    baseParams,
+                    ordering,
+                    scanStartPage + i,
+                    DiscoveryConstants.PageSize,
+                    metrics,
+                    cancellationToken))
                 .ToArray();
             var fallbackResults = await Task.WhenAll(fallbackTasks);
 
@@ -278,23 +256,20 @@ public class DiscoveryService(
                 if (status is not (>= 200 and < 300)) continue;
 
                 using var doc = JsonDocument.Parse(body);
-                if (!doc.RootElement.TryGetProperty("results", out var resultsEl) || resultsEl.ValueKind != JsonValueKind.Array)
+                if (!doc.RootElement.TryGetProperty("results", out var resultsEl) ||
+                    resultsEl.ValueKind != JsonValueKind.Array)
                     continue;
 
-                foreach (var g in resultsEl.EnumerateArray())
-                {
-                    if (!TryGetInt(g, "id", out var id)) continue;
-                    var rating = TryGetDecimal(g, "rating");
-                    if (!rating.HasValue || rating.Value < minRating) continue;
-
-                    anyAbove = true;
-                    if (seen.Add(id))
-                        pool.Add(g.Clone());
-                }
+                HighRatingPageProcessor.CollectFromFallbackPage(
+                    resultsEl,
+                    minRating,
+                    seen,
+                    pool,
+                    ref anyAbove);
             }
         }
 
-        var candidates = FilterExcluded(pool, excludedIds);
+        var candidates = RawgDiscoveryJson.FilterExcluded(pool, excludedIds);
 
         if (candidates.Count == 0)
         {
@@ -318,18 +293,15 @@ public class DiscoveryService(
             };
         }
 
-        for (var i = 0; i < MaxHighRatingRepicks; i++)
-        {
-            var chosen = candidates[Random.Shared.Next(0, candidates.Count)];
-            if (!TryGetInt(chosen, "id", out var id) || excludedIds.Contains(id))
-            {
-                metrics.Repicks++;
-                continue;
-            }
-
-            var game = JsonSerializer.Deserialize<JsonElement>(chosen.GetRawText());
-            return new DiscoveryRandomResponseDto { Success = true, Game = game };
-        }
+        var repicksHr = metrics.Repicks;
+        var pickedHr = DiscoveryRandomPicker.TryPickWithRepicks(
+            candidates,
+            excludedIds,
+            DiscoveryConstants.MaxHighRatingRepicks,
+            ref repicksHr);
+        metrics.Repicks = repicksHr;
+        if (pickedHr != null)
+            return pickedHr;
 
         return new DiscoveryRandomResponseDto
         {
@@ -346,21 +318,15 @@ public class DiscoveryService(
     {
         var cacheKey = $"discovery:count:{baseParams.GetHashCode()}";
         if (cache.TryGetValue<long>(cacheKey, out var cached))
-        {
             return cached;
-        }
 
         var (status, body) = await FetchPageAsync(baseParams, "", page: 1, pageSize: 1, metrics, cancellationToken);
         if (status is not (>= 200 and < 300))
-        {
             return 0;
-        }
 
-        var count = ParseCountLong(body);
+        var count = RawgDiscoveryJson.ParseCountLong(body);
         if (count > 0)
-        {
-            cache.Set(cacheKey, count, CountCacheTtl);
-        }
+            cache.Set(cacheKey, count, DiscoveryConstants.CountCacheTtl);
 
         return count;
     }
@@ -391,100 +357,5 @@ public class DiscoveryService(
         var q = new QueryCollection(query);
         var (status, body) = await rawg.GetAsync("/games", q);
         return new RawgPageResult(status, body);
-    }
-
-    private void ParseResultsIntoList(string body, List<(int Index, JsonElement Element)> target, int? preferredIndex = null)
-    {
-        using var doc = JsonDocument.Parse(body);
-        if (!doc.RootElement.TryGetProperty("results", out var resultsEl) || resultsEl.ValueKind != JsonValueKind.Array)
-            return;
-
-        var len = resultsEl.GetArrayLength();
-        if (len == 0) return;
-
-        if (preferredIndex.HasValue && preferredIndex.Value >= 0 && preferredIndex.Value < len)
-        {
-            target.Add((preferredIndex.Value, resultsEl[preferredIndex.Value].Clone()));
-        }
-
-        for (var i = 0; i < len; i++)
-        {
-            if (preferredIndex.HasValue && i == preferredIndex.Value) continue;
-            target.Add((i, resultsEl[i].Clone()));
-        }
-    }
-
-    private List<int> GenerateFallbackPages(long count, int targetPage, int numPages)
-    {
-        var maxPage = (int)Math.Min((count + PageSize - 1) / PageSize, int.MaxValue);
-        var pages = new HashSet<int>();
-        var rng = new Random();
-
-        for (var i = 0; i < numPages * 3 && pages.Count < numPages; i++)
-        {
-            var offset = rng.Next(-5, 6);
-            var candidate = targetPage + offset;
-            if (candidate >= 1 && candidate <= maxPage && candidate != targetPage)
-            {
-                pages.Add(candidate);
-            }
-        }
-
-        while (pages.Count < numPages && pages.Count < maxPage)
-        {
-            var candidate = rng.Next(1, maxPage + 1);
-            pages.Add(candidate);
-        }
-
-        return pages.Take(numPages).ToList();
-    }
-
-    private List<JsonElement> FilterExcluded(List<JsonElement> elements, HashSet<int> excludedIds)
-    {
-        var result = new List<JsonElement>();
-        foreach (var el in elements)
-        {
-            if (TryGetInt(el, "id", out var id) && !excludedIds.Contains(id))
-            {
-                result.Add(el);
-            }
-        }
-        return result;
-    }
-
-    private static bool IsUpstreamError(int status) => status is >= 500 or 429 or 403 or 401;
-
-    /// <summary>RAWG <c>count</c> can exceed <see cref="int.MaxValue"/>; <see cref="JsonElement.TryGetInt32"/> would fail and yield 0 games.</summary>
-    private static long ParseCountLong(string body)
-    {
-        try
-        {
-            using var doc = JsonDocument.Parse(body);
-            if (!doc.RootElement.TryGetProperty("count", out var countEl))
-                return 0;
-
-            if (countEl.TryGetInt64(out var l))
-                return l;
-            if (countEl.TryGetDouble(out var d) && d >= 0)
-                return (long)d;
-            return 0;
-        }
-        catch
-        {
-            return 0;
-        }
-    }
-
-    private static bool TryGetInt(JsonElement el, string property, out int value)
-    {
-        value = 0;
-        return el.TryGetProperty(property, out var p) && p.TryGetInt32(out value);
-    }
-
-    private static decimal? TryGetDecimal(JsonElement el, string property)
-    {
-        if (!el.TryGetProperty(property, out var p)) return null;
-        if (p.ValueKind == JsonValueKind.Number && p.TryGetDecimal(out var d)) return d;
-        return null;
     }
 }
