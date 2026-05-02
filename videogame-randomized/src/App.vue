@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import GlobalToast from './components/base/GlobalToast.vue'
 </script>
 

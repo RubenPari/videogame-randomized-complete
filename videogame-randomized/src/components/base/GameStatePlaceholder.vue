@@ -1,7 +1,7 @@
-<script setup>
-defineProps({
-  isLoading: { type: Boolean, default: false }
-})
+<script setup lang="ts">
+defineProps<{
+  isLoading?: boolean
+}>()
 </script>
 
 <template>

@@ -48,44 +48,47 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const { locale } = useI18n()
-const isOpen = ref(false)
+interface LanguageOption {
+  code: string
+  name: string
+  flag: string
+}
 
-const availableLanguages = [
+const { locale } = useI18n()
+const isOpen = ref<boolean>(false)
+
+const availableLanguages: LanguageOption[] = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
   { code: 'it', name: 'Italiano', flag: '🇮🇹' },
   { code: 'es', name: 'Español', flag: '🇪🇸' }
 ]
 
-const currentLocale = computed(() => locale.value)
-const currentLangInfo = computed(() => 
-  availableLanguages.find(lang => lang.code === locale.value) || availableLanguages[0]
+const currentLocale = computed<string>(() => locale.value)
+const currentLangInfo = computed<LanguageOption>(() =>
+  availableLanguages.find((lang) => lang.code === locale.value) ?? availableLanguages[0]!
 )
 
-const switchLanguage = (code) => {
+const switchLanguage = (code: string): void => {
   locale.value = code
   localStorage.setItem('user-locale', code)
-  
-  // Set html lang attribute for accessibility
+
   document.documentElement.lang = code
-  
+
   isOpen.value = false
 }
 
-// Close dropdown when clicking outside
-const closeDropdown = (e) => {
-  if (isOpen.value && !e.target.closest('.relative')) {
+const closeDropdown = (e: Event): void => {
+  if (isOpen.value && !(e.target as HTMLElement).closest('.relative')) {
     isOpen.value = false
   }
 }
 
 onMounted(() => {
   document.addEventListener('click', closeDropdown)
-  // Ensure html lang is set on mount
   document.documentElement.lang = locale.value
 })
 
