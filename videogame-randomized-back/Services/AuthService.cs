@@ -1,9 +1,4 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using videogame_randomized_back.DTOs;
 using videogame_randomized_back.Models;
 
@@ -16,42 +11,10 @@ namespace videogame_randomized_back.Services;
 public class AuthService(
     UserManager<AppUser> userManager, 
     EmailService emailService,
-    IOptions<JwtSettings> jwtSettings,
+    IJwtTokenService jwtTokenService,
     ILogger<AuthService> logger)
 {
-    private readonly JwtSettings _jwtSettings = jwtSettings.Value;
-
-    /// <summary>
-    /// Generates a JWT token for the specified user.
-    /// </summary>
-    /// <param name="user">The user to generate the token for.</param>
-    /// <returns>A JWT token string.</returns>
-    private async Task<string> GenerateJwtTokenAsync(AppUser user)
-    {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, user.Id),
-            new(ClaimTypes.Email, user.Email!),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
-
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes),
-            Issuer = _jwtSettings.Issuer,
-            Audience = _jwtSettings.Audience,
-            SigningCredentials = credentials
-        };
-
-        var handler = new JwtSecurityTokenHandler();
-        var token = handler.CreateToken(tokenDescriptor);
-        
-        return handler.WriteToken(token);
-    }
+    private readonly IJwtTokenService _jwtTokenService = jwtTokenService;
 
     /// <summary>
     /// Registers a new user with the specified email and password.
@@ -145,7 +108,7 @@ public class AuthService(
             return LoginResult.Failed("Invalid email or password");
         }
 
-        var token = await GenerateJwtTokenAsync(user);
+        var token = await _jwtTokenService.GenerateAsync(user);
         
         logger.LogInformation("Login successful for user: {Email}", email);
         return LoginResult.Succeeded(token, user.Email!);

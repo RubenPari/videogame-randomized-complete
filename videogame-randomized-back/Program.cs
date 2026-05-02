@@ -158,6 +158,7 @@ builder.Services.AddScoped<IDiscoveryLogService, DiscoveryLogService>();
 builder.Services.AddScoped<DiscoveryService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<RawgService>();
 builder.Services.AddScoped<TranslateService>();
 builder.Services.AddScoped<YoutubeService>();
