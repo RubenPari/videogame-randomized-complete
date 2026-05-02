@@ -28,6 +28,8 @@ interface RandomDiscoveryParams {
   excludeIds?: string
 }
 
+let youtubeQuotaExceeded = false
+
 export default {
   getGenres(): Promise<AxiosResponse<unknown>> {
     return rawgClient.get('/genres')
@@ -60,13 +62,17 @@ export default {
   },
 
   async searchYouTubeTrailer(gameName: string): Promise<string | null> {
-    if (!gameName) return null
+    if (!gameName || youtubeQuotaExceeded) return null
     try {
       const response = await httpClient.get('/youtube/search', {
         params: { q: `${gameName} official trailer` },
       })
       return (response.data as { videoId?: string })?.videoId || null
-    } catch {
+    } catch (error: any) {
+      if (error?.response?.status === 403) {
+        console.warn('YouTube API quota exceeded. Disabling trailer search for this session.')
+        youtubeQuotaExceeded = true
+      }
       return null
     }
   },
