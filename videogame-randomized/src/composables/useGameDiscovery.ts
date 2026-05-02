@@ -2,32 +2,27 @@ import { ref, reactive, computed } from 'vue'
 import apiService from '@/services/api'
 import httpClient from '@/services/httpClient'
 
-/**
- * useGameDiscovery
- * Composable for managing game discovery logic, including filters,
- * generation, history, and description fetching/translation.
- * Integrates with persistent discovery log for cross-session exclusion.
- */
+interface DiscoveryEntry {
+  id: number
+  name: string
+}
 
-// Module-scoped state so multiple callers share the same discovery session/log.
-const currentGame = ref(null)
+const currentGame = ref<Record<string, unknown> | null>(null)
 const gameDescription = ref('')
 const isLoading = ref(false)
-const error = ref(null)
-const gameHistory = ref([]) // Current session history
-const pastHistory = ref([]) // Loaded from server (previous sessions)
+const error = ref<string | null>(null)
+const gameHistory = ref<DiscoveryEntry[]>([])
+const pastHistory = ref<DiscoveryEntry[]>([])
 const totalGamesCount = ref(0)
 
-// Centralized filters using reactive object
 const filters = reactive({
   genre: '',
-  platforms: [],
+  platforms: [] as number[],
   minRating: 0,
   startYear: 2010,
   endYear: new Date().getFullYear(),
 })
 
-// All excluded IDs = current session + past sessions
 const allExcludedIds = computed(() => {
   const currentIds = gameHistory.value.map((g) => g.id)
   const pastIds = pastHistory.value.map((g) => g.id)
@@ -37,12 +32,9 @@ const allExcludedIds = computed(() => {
 const discoveredCount = computed(() => pastHistory.value.length)
 
 export function useGameDiscovery() {
-  /**
-   * Load discovery log from the server (previous sessions)
-   */
   const loadPastHistory = async () => {
     try {
-      const response = await httpClient.get('/discovery-log')
+      const response = await httpClient.get<DiscoveryEntry[]>('/discovery-log')
       pastHistory.value = response.data || []
     } catch (err) {
       console.error('Failed to load discovery log:', err)
@@ -50,9 +42,6 @@ export function useGameDiscovery() {
     }
   }
 
-  /**
-   * Clear all discovery log entries from the server
-   */
   const clearPastHistory = async () => {
     try {
       await httpClient.delete('/discovery-log')
@@ -63,12 +52,7 @@ export function useGameDiscovery() {
     }
   }
 
-  /**
-   * Remove a single discovery log entry (and allow it to reappear immediately)
-   * - Removes from server (past sessions)
-   * - Removes from current session history (in-memory)
-   */
-  const removeDiscovered = async (gameId) => {
+  const removeDiscovered = async (gameId: number) => {
     const id = Number(gameId)
     if (!Number.isFinite(id)) return
 
@@ -83,9 +67,19 @@ export function useGameDiscovery() {
     }
   }
 
-  /**
-   * Generates a new random game based on current filters
-   */
+  const fetchGameDetails = async (gameId: number) => {
+    try {
+      gameDescription.value = 'Decrypting database entry...'
+      const response = await apiService.getGameDetails(gameId)
+      const data = response.data as { description?: string }
+      const englishDescription = data.description
+      gameDescription.value = await apiService.translateGameDescription(englishDescription || '')
+    } catch (err) {
+      console.error('Translation failure:', err)
+      gameDescription.value = 'Data corrupted: unable to translate entry.'
+    }
+  }
+
   const generateGame = async () => {
     isLoading.value = true
     error.value = null
@@ -102,10 +96,9 @@ export function useGameDiscovery() {
         excludeIds: excludeIds || undefined,
       })
 
-      const payload = res.data
+      const payload = res.data as { success?: boolean; error?: string; game?: Record<string, unknown> }
       if (!payload?.success) {
-        error.value =
-          payload?.error || 'No games found. Adjust your parameters.'
+        error.value = payload?.error || 'No games found. Adjust your parameters.'
         return
       }
 
@@ -115,8 +108,7 @@ export function useGameDiscovery() {
         return
       }
 
-      // Update history and auto-save to server
-      const entry = { id: selected.id, name: selected.name }
+      const entry: DiscoveryEntry = { id: selected.id as number, name: selected.name as string }
       gameHistory.value.push(entry)
       if (!pastHistory.value.some((p) => p.id === entry.id)) {
         pastHistory.value = [...pastHistory.value, entry]
@@ -127,10 +119,7 @@ export function useGameDiscovery() {
         console.error('Failed to auto-save discovery log entry:', err)
       }
 
-      // Fetch details & translate
-      await fetchGameDetails(selected.id)
-
-      // Set as current
+      await fetchGameDetails(selected.id as number)
       currentGame.value = selected
     } catch (err) {
       console.error('Discovery failure:', err)
@@ -140,34 +129,13 @@ export function useGameDiscovery() {
     }
   }
 
-  /**
-   * Fetches detailed information and handles translation
-   * @param {number} gameId
-   */
-  const fetchGameDetails = async (gameId) => {
-    try {
-      gameDescription.value = 'Decrypting database entry...'
-      const response = await apiService.getGameDetails(gameId)
-      const englishDescription = response.data.description
-
-      gameDescription.value = await apiService.translateGameDescription(englishDescription)
-    } catch (err) {
-      console.error('Translation failure:', err)
-      gameDescription.value = 'Data corrupted: unable to translate entry.'
-    }
-  }
-
-  /**
-   * Loads a specific game by ID from the RAWG API and displays it
-   * @param {number} gameId
-   */
-  const loadGameById = async (gameId) => {
+  const loadGameById = async (gameId: number) => {
     isLoading.value = true
     error.value = null
 
     try {
       const response = await apiService.getGameDetails(gameId)
-      currentGame.value = response.data
+      currentGame.value = response.data as Record<string, unknown>
       await fetchGameDetails(gameId)
     } catch (err) {
       console.error('Failed to load game:', err)
@@ -177,9 +145,6 @@ export function useGameDiscovery() {
     }
   }
 
-  /**
-   * Resets current session history
-   */
   const clearHistory = () => {
     gameHistory.value = []
   }
