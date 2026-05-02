@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Primitives;
@@ -14,16 +15,22 @@ public class DiscoveryService(
     RawgService rawg,
     IMemoryCache cache)
 {
-    private const int DefaultPageSize = 40;
-    private static readonly TimeSpan MaxValidPageTtl = TimeSpan.FromMinutes(20);
-
-    private record MaxPageCacheEntry(long Count, int PageSize, int MaxValidPage, DateTimeOffset CachedAt);
+    private const int PageSize = 40;
+    private const int MaxUniformFallbackPages = 3;
+    private const int MaxHighRatingScanPages = 10;
+    private const int HighRatingPoolThreshold = 100;
+    private const int HighRatingFallbackPages = 5;
+    private const int MaxUniformRepicks = 5;
+    private const int MaxHighRatingRepicks = 5;
+    private static readonly TimeSpan CountCacheTtl = TimeSpan.FromMinutes(5);
 
     private sealed class DiscoveryMetrics
     {
         public int RawgCalls { get; set; }
         public int Repicks { get; set; }
     }
+
+    private record RawgPageResult(int StatusCode, string Body);
 
     public async Task<DiscoveryRandomResponseDto> GetRandomGameAsync(
         string userId,
@@ -40,7 +47,6 @@ public class DiscoveryService(
             };
         }
 
-        var pageSize = DefaultPageSize;
         var minRating = request.MinRating.GetValueOrDefault(0m);
         var isHighRatingMode = minRating > 0m;
         var metrics = new DiscoveryMetrics();
@@ -49,7 +55,7 @@ public class DiscoveryService(
 
         if (isHighRatingMode)
         {
-            var res = await GetRandomHighRatedAsync(request, excludedIds, pageSize, metrics, cancellationToken);
+            var res = await GetRandomHighRatedAsync(request, excludedIds, metrics, cancellationToken);
             logger.LogInformation(
                 "Discovery(highRating) rawgCalls={RawgCalls} repicks={Repicks} excludedCount={ExcludedCount}",
                 metrics.RawgCalls,
@@ -58,7 +64,7 @@ public class DiscoveryService(
             return res;
         }
 
-        var result = await GetRandomUniformAsync(request, excludedIds, pageSize, metrics, cancellationToken);
+        var result = await GetRandomUniformAsync(request, excludedIds, metrics, cancellationToken);
         logger.LogInformation(
             "Discovery(uniform) rawgCalls={RawgCalls} repicks={Repicks} excludedCount={ExcludedCount}",
             metrics.RawgCalls,
@@ -104,46 +110,15 @@ public class DiscoveryService(
         return dict;
     }
 
-    private static string BuildCacheKey(DiscoveryRandomRequestDto request, string ordering)
-    {
-        var genre = request.Genre?.Trim() ?? "";
-        var platforms = request.Platforms?.Trim() ?? "";
-        var startYear = request.StartYear?.ToString() ?? "";
-        var endYear = request.EndYear?.ToString() ?? "";
-        var minRating = request.MinRating?.ToString() ?? "0";
-        return $"discovery:maxValidPage:{genre}|{platforms}|{startYear}|{endYear}|{minRating}|{ordering}";
-    }
-
     private async Task<DiscoveryRandomResponseDto> GetRandomUniformAsync(
         DiscoveryRandomRequestDto request,
         HashSet<int> excludedIds,
-        int pageSize,
         DiscoveryMetrics metrics,
         CancellationToken cancellationToken)
     {
-        const int maxRepicks = 5;
         var baseParams = BuildBaseParams(request);
-        var ordering = "";
-        var cacheKey = BuildCacheKey(request, ordering);
 
-        var (count, maxValidPage, upstreamFailed) = await GetOrComputeMaxValidPageAsync(
-            cacheKey,
-            baseParams,
-            ordering,
-            pageSize,
-            metrics,
-            cancellationToken);
-
-        if (upstreamFailed)
-        {
-            return new DiscoveryRandomResponseDto
-            {
-                Success = false,
-                Error = "Game catalog temporarily unavailable.",
-                IsUpstreamFailure = true
-            };
-        }
-
+        var count = await GetCountAsync(baseParams, metrics, cancellationToken);
         if (count <= 0)
         {
             return new DiscoveryRandomResponseDto
@@ -154,52 +129,77 @@ public class DiscoveryService(
             };
         }
 
-        for (var attempt = 0; attempt < maxRepicks; attempt++)
+        var allResults = new List<(int Index, JsonElement Element)>();
+        var anyUpstreamError = false;
+
+        var randomOffset = Random.Shared.NextInt64(0, count);
+        var targetPage = (int)(randomOffset / PageSize) + 1;
+        var targetIndex = (int)(randomOffset % PageSize);
+
+        var (primaryStatus, primaryBody) = await FetchPageAsync(baseParams, "", targetPage, PageSize, metrics, cancellationToken);
+        if (IsUpstreamError(primaryStatus))
         {
-            var offset = Random.Shared.NextInt64(0, count);
-            var page = (int)(offset / pageSize) + 1;
-            var index = (int)(offset % pageSize);
+            anyUpstreamError = true;
+        }
+        else if (primaryStatus is >= 200 and < 300)
+        {
+            ParseResultsIntoList(primaryBody, allResults, targetIndex);
+        }
 
-            if (page > maxValidPage) page = maxValidPage;
-            if (page < 1) page = 1;
+        if (allResults.Count == 0 && !anyUpstreamError)
+        {
+            var fallbackPages = GenerateFallbackPages(count, targetPage, MaxUniformFallbackPages);
+            var fallbackTasks = fallbackPages.Select(p => FetchPageAsync(baseParams, "", p, PageSize, metrics, cancellationToken)).ToArray();
+            var fallbackResults = await Task.WhenAll(fallbackTasks);
 
-            var (status, body, updatedMaxValidPage) = await TryFetchPageAndPickAsync(
-                baseParams,
-                ordering,
-                page,
-                pageSize,
-                index,
-                excludedIds,
-                metrics,
-                cancellationToken);
-
-            if (updatedMaxValidPage.HasValue && updatedMaxValidPage.Value < maxValidPage)
+            foreach (var (status, body) in fallbackResults)
             {
-                maxValidPage = updatedMaxValidPage.Value;
-                cache.Set(cacheKey, new MaxPageCacheEntry(count, pageSize, maxValidPage, DateTimeOffset.UtcNow), MaxValidPageTtl);
+                if (status is >= 200 and < 300)
+                {
+                    ParseResultsIntoList(body, allResults);
+                }
+                else if (IsUpstreamError(status))
+                {
+                    anyUpstreamError = true;
+                }
             }
+        }
 
-            if (status is >= 200 and < 300)
+        if (anyUpstreamError && allResults.Count == 0)
+        {
+            return new DiscoveryRandomResponseDto
             {
-                var game = JsonSerializer.Deserialize<JsonElement>(body);
-                return new DiscoveryRandomResponseDto { Success = true, Game = game };
-            }
+                Success = false,
+                Error = "Game catalog temporarily unavailable.",
+                IsUpstreamFailure = true
+            };
+        }
 
-            if (status == StatusCodes.Status404NotFound)
+        var candidateElements = FilterExcluded(allResults.Select(r => r.Element).ToList(), excludedIds);
+
+        if (candidateElements.Count == 0)
+        {
+            return new DiscoveryRandomResponseDto
             {
-                metrics.Repicks += 1;
+                Success = false,
+                Error = allResults.Count > 0
+                    ? "Exhausted unique results for these parameters."
+                    : "No games found. Adjust your parameters.",
+                IsUpstreamFailure = false
+            };
+        }
+
+        for (var attempt = 0; attempt < MaxUniformRepicks; attempt++)
+        {
+            var chosen = candidateElements[Random.Shared.Next(0, candidateElements.Count)];
+            if (!TryGetInt(chosen, "id", out var id) || excludedIds.Contains(id))
+            {
+                metrics.Repicks++;
                 continue;
             }
 
-            if (status < 200 || status >= 300)
-            {
-                return new DiscoveryRandomResponseDto
-                {
-                    Success = false,
-                    Error = "Game catalog temporarily unavailable.",
-                    IsUpstreamFailure = status is >= 500 or 429 or 403 or 401
-                };
-            }
+            var game = JsonSerializer.Deserialize<JsonElement>(chosen.GetRawText());
+            return new DiscoveryRandomResponseDto { Success = true, Game = game };
         }
 
         return new DiscoveryRandomResponseDto
@@ -213,34 +213,30 @@ public class DiscoveryService(
     private async Task<DiscoveryRandomResponseDto> GetRandomHighRatedAsync(
         DiscoveryRandomRequestDto request,
         HashSet<int> excludedIds,
-        int pageSize,
         DiscoveryMetrics metrics,
         CancellationToken cancellationToken)
     {
         var minRating = request.MinRating.GetValueOrDefault(0m);
-        const int maxScanPages = 50;
-        const int maxRepicks = 5;
-
         var baseParams = BuildBaseParams(request);
-        var ordering = "-rating";
+        const string ordering = "-rating";
 
         var pool = new List<JsonElement>();
         var seen = new HashSet<int>();
         var anyAbove = false;
+        var anyUpstreamError = false;
 
-        for (var page = 1; page <= maxScanPages; page++)
+        for (var page = 1; page <= MaxHighRatingScanPages; page++)
         {
-            var (status, body) = await RawgGetGamesAsync(baseParams, ordering, page, pageSize, metrics, cancellationToken);
-            if (status == StatusCodes.Status404NotFound) break;
-            if (status < 200 || status >= 300)
+            var (status, body) = await FetchPageAsync(baseParams, ordering, page, PageSize, metrics, cancellationToken);
+
+            if (IsUpstreamError(status))
             {
-                return new DiscoveryRandomResponseDto
-                {
-                    Success = false,
-                    Error = "Game catalog temporarily unavailable.",
-                    IsUpstreamFailure = status is >= 500 or 429 or 403 or 401
-                };
+                anyUpstreamError = true;
+                break;
             }
+
+            if (status == StatusCodes.Status404NotFound) break;
+            if (status is not (>= 200 and < 300)) break;
 
             using var doc = JsonDocument.Parse(body);
             if (!doc.RootElement.TryGetProperty("results", out var resultsEl) || resultsEl.ValueKind != JsonValueKind.Array)
@@ -261,19 +257,57 @@ public class DiscoveryService(
                 {
                     anyAbove = true;
                     if (seen.Add(id))
-                        pool.Add(g);
+                        pool.Add(g.Clone());
                 }
             }
 
+            if (pool.Count >= HighRatingPoolThreshold) break;
             if (firstRated.HasValue && firstRated.Value < minRating) break;
         }
 
-        var candidates = pool
-            .Where(g => TryGetInt(g, "id", out var id) && !excludedIds.Contains(id))
-            .ToList();
+        if (pool.Count < HighRatingPoolThreshold && !anyUpstreamError)
+        {
+            var scanStartPage = MaxHighRatingScanPages + 1;
+            var fallbackTasks = Enumerable.Range(0, HighRatingFallbackPages)
+                .Select(i => FetchPageAsync(baseParams, ordering, scanStartPage + i, PageSize, metrics, cancellationToken))
+                .ToArray();
+            var fallbackResults = await Task.WhenAll(fallbackTasks);
+
+            foreach (var (status, body) in fallbackResults)
+            {
+                if (status is not (>= 200 and < 300)) continue;
+
+                using var doc = JsonDocument.Parse(body);
+                if (!doc.RootElement.TryGetProperty("results", out var resultsEl) || resultsEl.ValueKind != JsonValueKind.Array)
+                    continue;
+
+                foreach (var g in resultsEl.EnumerateArray())
+                {
+                    if (!TryGetInt(g, "id", out var id)) continue;
+                    var rating = TryGetDecimal(g, "rating");
+                    if (!rating.HasValue || rating.Value < minRating) continue;
+
+                    anyAbove = true;
+                    if (seen.Add(id))
+                        pool.Add(g.Clone());
+                }
+            }
+        }
+
+        var candidates = FilterExcluded(pool, excludedIds);
 
         if (candidates.Count == 0)
         {
+            if (anyUpstreamError && pool.Count == 0)
+            {
+                return new DiscoveryRandomResponseDto
+                {
+                    Success = false,
+                    Error = "Game catalog temporarily unavailable.",
+                    IsUpstreamFailure = true
+                };
+            }
+
             return new DiscoveryRandomResponseDto
             {
                 Success = false,
@@ -284,10 +318,14 @@ public class DiscoveryService(
             };
         }
 
-        for (var i = 0; i < maxRepicks; i++)
+        for (var i = 0; i < MaxHighRatingRepicks; i++)
         {
             var chosen = candidates[Random.Shared.Next(0, candidates.Count)];
-            if (!TryGetInt(chosen, "id", out var id) || excludedIds.Contains(id)) continue;
+            if (!TryGetInt(chosen, "id", out var id) || excludedIds.Contains(id))
+            {
+                metrics.Repicks++;
+                continue;
+            }
 
             var game = JsonSerializer.Deserialize<JsonElement>(chosen.GetRawText());
             return new DiscoveryRandomResponseDto { Success = true, Game = game };
@@ -301,119 +339,41 @@ public class DiscoveryService(
         };
     }
 
-    private async Task<(long Count, int MaxValidPage, bool UpstreamFailed)> GetOrComputeMaxValidPageAsync(
-        string cacheKey,
+    private async Task<long> GetCountAsync(
         Dictionary<string, string?> baseParams,
-        string ordering,
-        int pageSize,
         DiscoveryMetrics metrics,
         CancellationToken cancellationToken)
     {
-        if (cache.TryGetValue<MaxPageCacheEntry>(cacheKey, out var cached) && cached is not null && cached.PageSize == pageSize)
+        var cacheKey = $"discovery:count:{baseParams.GetHashCode()}";
+        if (cache.TryGetValue<long>(cacheKey, out var cached))
         {
-            logger.LogDebug("Discovery cache hit for {Key}: maxValidPage={MaxValidPage}, count={Count}", cacheKey, cached.MaxValidPage, cached.Count);
-            return (cached.Count, cached.MaxValidPage, false);
+            return cached;
         }
 
-        logger.LogDebug("Discovery cache miss for {Key}", cacheKey);
-
-        var (countStatus, countBody) = await RawgGetGamesAsync(baseParams, ordering, page: 1, pageSize: 1, metrics, cancellationToken);
-        if (countStatus < 200 || countStatus >= 300)
-            return (0, 1, true);
-
-        var count = ParseCountLong(countBody);
-        if (count <= 0)
+        var (status, body) = await FetchPageAsync(baseParams, "", page: 1, pageSize: 1, metrics, cancellationToken);
+        if (status is not (>= 200 and < 300))
         {
-            cache.Set(cacheKey, new MaxPageCacheEntry(0, pageSize, 1, DateTimeOffset.UtcNow), MaxValidPageTtl);
-            return (0, 1, false);
+            return 0;
         }
 
-        var maxPageLong = Math.Max(1L, (count + pageSize - 1) / pageSize);
-        var hi = (int)Math.Min(maxPageLong, int.MaxValue);
-        var maxValidPage = await FindMaxValidPageAsync(baseParams, ordering, hi, metrics, cancellationToken);
+        var count = ParseCountLong(body);
+        if (count > 0)
+        {
+            cache.Set(cacheKey, count, CountCacheTtl);
+        }
 
-        cache.Set(cacheKey, new MaxPageCacheEntry(count, pageSize, maxValidPage, DateTimeOffset.UtcNow), MaxValidPageTtl);
-        return (count, maxValidPage, false);
+        return count;
     }
 
-    private async Task<int> FindMaxValidPageAsync(
-        Dictionary<string, string?> baseParams,
-        string ordering,
-        int upperBound,
-        DiscoveryMetrics metrics,
-        CancellationToken cancellationToken)
-    {
-        var lo = 1;
-        var hi = upperBound;
-        var best = 1;
-
-        for (var i = 0; i < 14 && lo <= hi; i++)
-        {
-            var mid = (lo + hi) / 2;
-            var (status, _) = await RawgGetGamesAsync(baseParams, ordering, page: mid, pageSize: 1, metrics, cancellationToken);
-            if (status is >= 200 and < 300)
-            {
-                best = mid;
-                lo = mid + 1;
-            }
-            else if (status == StatusCodes.Status404NotFound)
-            {
-                hi = mid - 1;
-            }
-            else
-            {
-                break;
-            }
-        }
-
-        return Math.Max(1, best);
-    }
-
-    private async Task<(int StatusCode, string Body, int? UpdatedMaxValidPage)> TryFetchPageAndPickAsync(
+    private async Task<RawgPageResult> FetchPageAsync(
         Dictionary<string, string?> baseParams,
         string ordering,
         int page,
         int pageSize,
-        int index,
-        HashSet<int> excludedIds,
         DiscoveryMetrics metrics,
         CancellationToken cancellationToken)
     {
-        var (status, body) = await RawgGetGamesAsync(baseParams, ordering, page, pageSize, metrics, cancellationToken);
-        if (status == StatusCodes.Status404NotFound)
-        {
-            logger.LogDebug("RAWG returned 404 for page {Page}; will shrink maxValidPage to {NewMax}", page, Math.Max(1, page - 1));
-            return (StatusCodes.Status404NotFound, body, Math.Max(1, page - 1));
-        }
-
-        if (status < 200 || status >= 300)
-            return (status, body, null);
-
-        using var doc = JsonDocument.Parse(body);
-        if (!doc.RootElement.TryGetProperty("results", out var resultsEl) || resultsEl.ValueKind != JsonValueKind.Array)
-            return (StatusCodes.Status404NotFound, """{"error":"No results."}""", null);
-
-        var len = resultsEl.GetArrayLength();
-        if (len == 0)
-            return (StatusCodes.Status404NotFound, """{"error":"No results."}""", null);
-
-        var chosen = index < len ? resultsEl[index] : resultsEl[Random.Shared.Next(0, len)];
-
-        if (TryGetInt(chosen, "id", out var id) && excludedIds.Contains(id))
-            return (StatusCodes.Status404NotFound, """{"error":"Excluded."}""", null);
-
-        return (StatusCodes.Status200OK, chosen.GetRawText(), null);
-    }
-
-    private async Task<(int StatusCode, string Body)> RawgGetGamesAsync(
-        Dictionary<string, string?> baseParams,
-        string ordering,
-        int page,
-        int pageSize,
-        DiscoveryMetrics? metrics,
-        CancellationToken cancellationToken)
-    {
-        metrics?.RawgCalls += 1;
+        metrics.RawgCalls += 1;
 
         var query = new Dictionary<string, StringValues>(StringComparer.OrdinalIgnoreCase);
         foreach (var (k, v) in baseParams)
@@ -429,8 +389,70 @@ public class DiscoveryService(
         query["page_size"] = new StringValues(pageSize.ToString());
 
         var q = new QueryCollection(query);
-        return await rawg.GetAsync("/games", q);
+        var (status, body) = await rawg.GetAsync("/games", q);
+        return new RawgPageResult(status, body);
     }
+
+    private void ParseResultsIntoList(string body, List<(int Index, JsonElement Element)> target, int? preferredIndex = null)
+    {
+        using var doc = JsonDocument.Parse(body);
+        if (!doc.RootElement.TryGetProperty("results", out var resultsEl) || resultsEl.ValueKind != JsonValueKind.Array)
+            return;
+
+        var len = resultsEl.GetArrayLength();
+        if (len == 0) return;
+
+        if (preferredIndex.HasValue && preferredIndex.Value >= 0 && preferredIndex.Value < len)
+        {
+            target.Add((preferredIndex.Value, resultsEl[preferredIndex.Value].Clone()));
+        }
+
+        for (var i = 0; i < len; i++)
+        {
+            if (preferredIndex.HasValue && i == preferredIndex.Value) continue;
+            target.Add((i, resultsEl[i].Clone()));
+        }
+    }
+
+    private List<int> GenerateFallbackPages(long count, int targetPage, int numPages)
+    {
+        var maxPage = (int)Math.Min((count + PageSize - 1) / PageSize, int.MaxValue);
+        var pages = new HashSet<int>();
+        var rng = new Random();
+
+        for (var i = 0; i < numPages * 3 && pages.Count < numPages; i++)
+        {
+            var offset = rng.Next(-5, 6);
+            var candidate = targetPage + offset;
+            if (candidate >= 1 && candidate <= maxPage && candidate != targetPage)
+            {
+                pages.Add(candidate);
+            }
+        }
+
+        while (pages.Count < numPages && pages.Count < maxPage)
+        {
+            var candidate = rng.Next(1, maxPage + 1);
+            pages.Add(candidate);
+        }
+
+        return pages.Take(numPages).ToList();
+    }
+
+    private List<JsonElement> FilterExcluded(List<JsonElement> elements, HashSet<int> excludedIds)
+    {
+        var result = new List<JsonElement>();
+        foreach (var el in elements)
+        {
+            if (TryGetInt(el, "id", out var id) && !excludedIds.Contains(id))
+            {
+                result.Add(el);
+            }
+        }
+        return result;
+    }
+
+    private static bool IsUpstreamError(int status) => status is >= 500 or 429 or 403 or 401;
 
     /// <summary>RAWG <c>count</c> can exceed <see cref="int.MaxValue"/>; <see cref="JsonElement.TryGetInt32"/> would fail and yield 0 games.</summary>
     private static long ParseCountLong(string body)
