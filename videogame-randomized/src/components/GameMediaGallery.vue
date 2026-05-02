@@ -1,14 +1,28 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 
-defineProps({
-  screenshots: { type: Array, default: () => [] },
-  videos: { type: Array, default: () => [] },
-  youtubeVideoId: { type: String, default: null },
-  isLoadingMedia: { type: Boolean, default: false }
-})
+interface Screenshot {
+  id?: number
+  image: string
+}
 
-const activeScreenshotIndex = ref(0)
+interface Video {
+  name?: string
+  preview?: string
+  data?: {
+    max?: string
+    '480'?: string
+  }
+}
+
+defineProps<{
+  screenshots?: Screenshot[]
+  videos?: Video[]
+  youtubeVideoId?: string | null
+  isLoadingMedia?: boolean
+}>()
+
+const activeScreenshotIndex = ref<number>(0)
 </script>
 
 <template>
@@ -18,7 +32,7 @@ const activeScreenshotIndex = ref(0)
 
   <div v-else class="flex-1 flex flex-col gap-8">
     <!-- RAWG Trailers -->
-    <div v-if="videos.length > 0" class="flex flex-col gap-3">
+    <div v-if="videos && videos.length > 0" class="flex flex-col gap-3">
       <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center justify-between">
         <span>{{ $t('gallery.video_trailer') }}</span>
         <span class="text-zinc-600">{{ videos.length > 1 ? videos.length + ' ' + $t('gallery.videos') : '' }}</span>
@@ -58,7 +72,7 @@ v-if="videos[0]?.data?.max || videos[0]?.data?.['480']"
     </div>
 
     <!-- Screenshots -->
-    <div v-if="screenshots.length > 0" class="flex flex-col gap-3">
+    <div v-if="screenshots && screenshots.length > 0" class="flex flex-col gap-3">
       <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{{ $t('gallery.image_gallery') }}</h3>
 
       <div class="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden min-h-64 relative group">

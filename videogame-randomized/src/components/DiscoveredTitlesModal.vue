@@ -1,33 +1,48 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useGameDiscovery } from '@/composables/useGameDiscovery'
 import apiService from '@/services/api'
 import { formatDate } from '@/utils/formatters'
 
-const props = defineProps({
-  show: { type: Boolean, default: false },
-})
+const props = defineProps<{
+  show?: boolean
+}>()
 
-const emit = defineEmits(['close'])
+const emit = defineEmits<{
+  close: []
+}>()
+
 const { t, locale } = useI18n()
 
 const discovery = useGameDiscovery()
-const searchQuery = ref('')
+const searchQuery = ref<string>('')
 
-const detailsById = ref(new Map())
-const loadingIds = ref(new Set())
+interface GameDetails {
+  id: number
+  background_image: string | undefined
+  rating: number | null
+  released: string | null
+}
 
-const filtered = computed(() => {
+const detailsById = ref<Map<number, GameDetails>>(new Map())
+const loadingIds = ref<Set<number>>(new Set())
+
+interface GameEntry {
+  id: number
+  name: string
+}
+
+const filtered = computed<GameEntry[]>(() => {
   const items = discovery.pastHistory.value || []
   const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return items
-  return items.filter((g) => String(g?.name || '').toLowerCase().includes(q))
+  if (!q) return items as GameEntry[]
+  return items.filter((g) => String(g?.name || '').toLowerCase().includes(q)) as GameEntry[]
 })
 
-const visibleItems = computed(() => filtered.value.slice(0, 40))
+const visibleItems = computed<GameEntry[]>(() => filtered.value.slice(0, 40))
 
-const preloadDetails = async (entries) => {
+const preloadDetails = async (entries: GameEntry[]): Promise<void> => {
   const ids = (entries || [])
     .map((e) => Number(e?.id))
     .filter((id) => Number.isFinite(id))
@@ -39,12 +54,12 @@ const preloadDetails = async (entries) => {
 
       try {
         const res = await apiService.getGameDetails(id)
-        const g = res?.data
+        const g = res?.data as Record<string, unknown>
         detailsById.value.set(id, {
           id,
-          background_image: g?.background_image,
+          background_image: g?.background_image as string | undefined,
           rating: typeof g?.rating === 'number' ? g.rating : null,
-          released: g?.released || null,
+          released: (g?.released as string) || null,
         })
       } catch {
         // Non-blocking: we'll keep the entry text-only if details fail.
@@ -72,11 +87,11 @@ watch(
   },
 )
 
-const removeOne = async (id) => {
+const removeOne = async (id: number): Promise<void> => {
   await discovery.removeDiscovered(id)
 }
 
-const clearAll = async () => {
+const clearAll = async (): Promise<void> => {
   if (confirm(t('discovered_modal.confirm_purge'))) {
     await discovery.clearPastHistory()
     discovery.clearHistory()
@@ -239,4 +254,3 @@ const clearAll = async () => {
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 </style>
-

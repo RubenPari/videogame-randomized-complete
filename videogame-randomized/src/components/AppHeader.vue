@@ -1,20 +1,27 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useVaultStore } from '@/stores/useVaultStore'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useGameDiscovery } from '@/composables/useGameDiscovery'
 import LanguageSwitcher from '@/components/base/LanguageSwitcher.vue'
 
-const emit = defineEmits(['open-vault', 'open-discovered', 'open-change-password', 'logout'])
+const emit = defineEmits<{
+  'open-vault': []
+  'open-discovered': []
+  'open-change-password': []
+  'logout': []
+}>()
 
 const vault = useVaultStore()
 const authStore = useAuthStore()
 const discovery = useGameDiscovery()
-const showUserMenu = ref(false)
+const showUserMenu = ref<boolean>(false)
 
-const toggleUserMenu = () => (showUserMenu.value = !showUserMenu.value)
+const toggleUserMenu = (): void => {
+  showUserMenu.value = !showUserMenu.value
+}
 
-const handleOpenChangePassword = () => {
+const handleOpenChangePassword = (): void => {
   showUserMenu.value = false
   emit('open-change-password')
 }

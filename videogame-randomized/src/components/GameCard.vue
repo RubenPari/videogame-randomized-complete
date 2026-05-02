@@ -1,33 +1,45 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useVaultStore } from '@/stores/useVaultStore'
 import { useToastStore } from '@/stores/useToastStore'
 import api from '@/services/api'
 import { formatDate } from '@/utils/formatters'
+import type { GameDto, GameShape } from '@/types/api-dtos'
 import GameMediaGallery from './GameMediaGallery.vue'
+
+interface Screenshot {
+  id: number
+  image: string
+}
+
+interface Video {
+  name?: string
+  preview?: string
+  data?: {
+    max?: string
+    '480'?: string
+  }
+}
 
 const { t, locale } = useI18n()
 
-const props = defineProps({
-  game: { type: Object, default: null },
-  description: { type: String, default: '' }
-})
+const props = defineProps<{
+  game?: GameShape | null
+  description?: string
+}>()
 
 const vault = useVaultStore()
 const toastSession = useToastStore()
 
-// Local UI State
-const screenshots = ref([])
-const videos = ref([])
-const youtubeVideoId = ref(null)
-const isLoadingMedia = ref(false)
+const screenshots = ref<Screenshot[]>([])
+const videos = ref<Video[]>([])
+const youtubeVideoId = ref<string | null>(null)
+const isLoadingMedia = ref<boolean>(false)
 
-// Computed
-const isSaved = computed(() => vault.isGameSaved(props.game?.id))
+const isSaved = computed<boolean>(() => props.game?.id != null && vault.isGameSaved(props.game.id))
 
-// Methods
-const loadMediaData = async () => {
+const loadMediaData = async (): Promise<void> => {
   if (!props.game || !props.game.id) return
 
   isLoadingMedia.value = true
@@ -42,14 +54,15 @@ const loadMediaData = async () => {
     ])
 
     if (screenshotsRes.status === 'fulfilled') {
-      screenshots.value = screenshotsRes.value.data?.results || []
+      const data = screenshotsRes.value.data as { results?: Screenshot[] }
+      screenshots.value = data?.results || []
     }
 
     if (moviesRes.status === 'fulfilled') {
-      videos.value = moviesRes.value.data?.results || []
+      const data = moviesRes.value.data as { results?: Video[] }
+      videos.value = data?.results || []
     }
 
-    // Fallback: search YouTube if no RAWG videos
     if (videos.value.length === 0 && props.game.name) {
       const videoId = await api.searchYouTubeTrailer(props.game.name)
       if (videoId) {
@@ -67,11 +80,13 @@ watch(() => props.game?.id, (newId) => {
   if (newId) loadMediaData()
 }, { immediate: true })
 
-const toggleSaveGame = async () => {
+const toggleSaveGame = async (): Promise<void> => {
   if (!props.game) return
 
   try {
-    const saved = await vault.toggleGame(props.game)
+    if (!('savedAt' in props.game)) return
+    if (!('savedAt' in props.game)) return
+    const saved = await vault.toggleGame(props.game as GameDto)
     toastSession.showToast(
       saved ? t('game.added_success') : t('game.removed_success'),
       'success'
@@ -142,12 +157,14 @@ v-for="genre in game.genres?.slice(0,3)" :key="genre.id"
       <div>
         <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">{{ $t('game.platforms') }}</h3>
         <div class="flex flex-wrap gap-2">
-          <span
-v-for="platform in game.platforms" :key="platform.platform.id"
-            class="text-xs font-mono px-2.5 py-1 bg-zinc-950 border border-zinc-800 text-zinc-400 rounded-md flex items-center gap-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-cyan-500/50"></span>
-            {{ platform.platform.name }}
-          </span>
+          <template v-if="Array.isArray(game.platforms)">
+            <span
+              v-for="platform in game.platforms" :key="'platform' in platform ? platform.platform.id : platform.id"
+              class="text-xs font-mono px-2.5 py-1 bg-zinc-950 border border-zinc-800 text-zinc-400 rounded-md flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-500/50"></span>
+              {{ 'platform' in platform ? platform.platform.name : platform.name }}
+            </span>
+          </template>
         </div>
       </div>
 

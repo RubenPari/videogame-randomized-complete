@@ -1,48 +1,47 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToastStore } from '@/stores/useToastStore'
 import authService from '@/services/auth'
 import { getApiErrorMessage } from '@/utils/apiError'
 
-defineProps({
-  show: {
-    type: Boolean,
-    required: true,
-  },
-})
+defineProps<{
+  show: boolean
+}>()
 
-const emit = defineEmits(['close'])
+const emit = defineEmits<{
+  close: []
+}>()
 
 const { t } = useI18n()
 const toastStore = useToastStore()
 
-const currentPassword = ref('')
-const newPassword = ref('')
-const loading = ref(false)
-const error = ref('')
+const currentPassword = ref<string>('')
+const newPassword = ref<string>('')
+const loading = ref<boolean>(false)
+const error = ref<string>('')
 
-const resetForm = () => {
+const resetForm = (): void => {
   currentPassword.value = ''
   newPassword.value = ''
   error.value = ''
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   error.value = ''
   loading.value = true
   try {
     await authService.changePassword(currentPassword.value, newPassword.value)
     toastStore.showToast(t('home.password_changed'), 'success')
     emit('close')
-  } catch (err) {
+  } catch (err: unknown) {
     error.value = getApiErrorMessage(err, t('home.password_change_error'))
   } finally {
     loading.value = false
   }
 }
 
-const handleClose = () => {
+const handleClose = (): void => {
   resetForm()
   emit('close')
 }

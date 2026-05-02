@@ -1,41 +1,45 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useVaultStore } from '@/stores/useVaultStore'
 import { formatDate } from '@/utils/formatters'
+import type { GameDto } from '@/types/api-dtos'
 
 const { t, locale } = useI18n()
 
-defineProps({
-  show: { type: Boolean, default: false }
-})
+defineProps<{
+  show?: boolean
+}>()
 
-const emit = defineEmits(['close'])
+const emit = defineEmits<{
+  close: []
+}>()
 
 const vault = useVaultStore()
-const searchQuery = ref('')
+const searchQuery = ref<string>('')
 
-// Computed
-const filteredGames = computed(() => {
+const filteredGames = computed<GameDto[]>(() => {
   if (!searchQuery.value.trim()) return vault.savedGames
   const query = searchQuery.value.toLowerCase()
-  return vault.savedGames.filter(game =>
+  return vault.savedGames.filter((game) =>
     game.name.toLowerCase().includes(query) ||
-    game.genres?.some(genre => genre.name.toLowerCase().includes(query))
+    game.genres?.some((genre) => genre.name.toLowerCase().includes(query))
   )
 })
 
-// Methods
-const removeGame = async (id) => await vault.removeGame(id)
-const clearAll = async () => {
+const removeGame = async (id: number): Promise<void> => {
+  await vault.removeGame(id)
+}
+
+const clearAll = async (): Promise<void> => {
   if (confirm(t('vault_modal.confirm_purge'))) {
     await vault.clearVault()
   }
 }
 
-const exportGames = () => {
+const exportGames = (): void => {
   if (vault.savedGames.length === 0) return
-  const data = vault.savedGames.map(g => ({
+  const data = vault.savedGames.map((g) => ({
     name: g.name,
     rating: g.rating,
     released: g.released
@@ -107,7 +111,7 @@ v-model="searchQuery" type="text" :placeholder="$t('vault_modal.search_placehold
               <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div v-for="game in filteredGames" :key="game.id" class="flex bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden group hover:border-zinc-700 transition-all h-32">
                   <div class="w-32 h-full flex-shrink-0 bg-zinc-900">
-                    <img :src="game.backgroundImage || game.background_image || '/placeholder-game.jpg'" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity" />
+                    <img :src="game.backgroundImage || '/placeholder-game.jpg'" class="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity" />
                   </div>
                   <div class="p-4 flex-1 flex flex-col justify-between min-w-0">
                     <div>

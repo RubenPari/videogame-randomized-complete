@@ -1,24 +1,33 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 
-const props = defineProps({
-  gameHistory: { type: Array, default: () => [] },
-  pastHistory: { type: Array, default: () => [] }
-})
+interface GameEntry {
+  id: number
+  name: string
+}
 
-const emit = defineEmits(['clear-history', 'clear-past-history', 'select-game'])
+const props = defineProps<{
+  gameHistory?: GameEntry[]
+  pastHistory?: GameEntry[]
+}>()
 
-const onClear = () => emit('clear-history')
-const onClearPast = () => emit('clear-past-history')
-const onSelectGame = (gameId) => emit('select-game', gameId)
+const emit = defineEmits<{
+  'clear-history': []
+  'clear-past-history': []
+  'select-game': [gameId: number]
+}>()
 
-const pastCount = computed(() => props.pastHistory.length)
+const onClear = (): void => emit('clear-history')
+const onClearPast = (): void => emit('clear-past-history')
+const onSelectGame = (gameId: number): void => emit('select-game', gameId)
+
+const pastCount = computed<number>(() => (props.pastHistory || []).length)
 </script>
 
 <template>
   <div class="space-y-4">
     <!-- Current Session Log -->
-    <div v-if="gameHistory.length > 0" class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-lg">
+    <div v-if="gameHistory && gameHistory.length > 0" class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-lg">
       <div class="flex items-center justify-between mb-4 pb-4 border-b border-zinc-800">
         <h3 class="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
           <svg class="w-4 h-4 text-fuchsia-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,7 +77,7 @@ class="text-[10px] font-bold text-zinc-600 hover:text-red-400 uppercase tracking
       </div>
       <div class="flex flex-wrap gap-1.5">
         <span
-v-for="game in pastHistory.slice(0, 20)" :key="game.id"
+v-for="game in pastHistory?.slice(0, 20)" :key="game.id"
           class="text-[10px] font-mono px-2 py-0.5 bg-zinc-950/80 border border-zinc-800/50 text-zinc-500 rounded truncate max-w-[150px] cursor-pointer hover:text-white hover:border-cyan-500/50 transition-colors"
           :title="game.name"
           @click="onSelectGame(game.id)">

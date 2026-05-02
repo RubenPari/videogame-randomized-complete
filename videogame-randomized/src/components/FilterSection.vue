@@ -1,38 +1,49 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
+import type { GenreDto, PlatformDto } from '@/types/api-dtos'
 
-const props = defineProps({
-  genres: { type: Array, default: () => [] },
-  platforms: { type: Array, default: () => [] },
-  isLoading: { type: Boolean, default: false }
-})
+interface Filters {
+  genre: string | number
+  minRating: number
+  startYear: number | null
+  endYear: number | null
+  platforms: number[]
+}
 
-// Two-way binding for filters using defineModel (Vue 3.4+)
-const filters = defineModel({ type: Object, required: true })
+const props = defineProps<{
+  genres?: GenreDto[]
+  platforms?: PlatformDto[]
+  isLoading?: boolean
+}>()
 
-const emit = defineEmits(['generate'])
+const filters = defineModel<Filters>({ required: true })
 
-// Computed
-const availableYears = computed(() => {
+const emit = defineEmits<{
+  generate: []
+}>()
+
+const availableYears = computed<number[]>(() => {
   const currentYear = new Date().getFullYear()
   return Array.from({ length: currentYear - 1980 + 1 }, (_, i) => currentYear - i)
 })
 
-// Methods
-const selectAllPlatforms = () => {
-  filters.value.platforms = props.platforms.map(p => p.id)
+const selectAllPlatforms = (): void => {
+  if (!filters.value || !props.platforms) return
+  filters.value.platforms = props.platforms.map((p) => p.id)
 }
 
-const deselectAllPlatforms = () => {
+const deselectAllPlatforms = (): void => {
+  if (!filters.value) return
   filters.value.platforms = []
 }
 
-const resetYearRange = () => {
+const resetYearRange = (): void => {
+  if (!filters.value) return
   filters.value.startYear = null
   filters.value.endYear = null
 }
 
-const onGenerate = () => emit('generate')
+const onGenerate = (): void => emit('generate')
 </script>
 
 <template>
