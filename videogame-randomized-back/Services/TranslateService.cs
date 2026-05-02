@@ -7,6 +7,7 @@ namespace videogame_randomized_back.Services;
 public class TranslateService(
     ILogger<TranslateService> logger,
     IHttpClientFactory httpClientFactory)
+    : ITranslateService
 {
     private readonly ILogger<TranslateService> _logger = logger;
     private readonly HttpClient _client = httpClientFactory.CreateClient("googleTranslate");

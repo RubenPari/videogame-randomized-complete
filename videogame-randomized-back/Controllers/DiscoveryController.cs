@@ -11,7 +11,7 @@ namespace videogame_randomized_back.Controllers;
 [Authorize]
 public class DiscoveryController(
     DiscoveryService discovery,
-    RawgService rawg) : ControllerBase
+    IRawgService rawg) : ControllerBase
 {
     private const string MissingKeyType = "urn:videogame-randomizer:rawg:missing-api-key";
 

@@ -6,6 +6,7 @@ namespace videogame_randomized_back.Services;
 public class YoutubeService(
     ILogger<YoutubeService> logger,
     IHttpClientFactory httpClientFactory)
+    : IYoutubeService
 {
     private readonly ILogger<YoutubeService> _logger = logger;
     private readonly HttpClient _client = httpClientFactory.CreateClient("youtube");

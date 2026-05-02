@@ -5,7 +5,7 @@ namespace videogame_randomized_back.Controllers;
 
 [ApiController]
 [Route("api/translate")]
-public class TranslateController(TranslateService translate) : ControllerBase
+public class TranslateController(ITranslateService translate) : ControllerBase
 {
     private const string MissingKeyType = "urn:videogame-randomizer:google-translate:missing-api-key";
 

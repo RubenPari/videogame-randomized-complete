@@ -7,6 +7,7 @@ namespace videogame_randomized_back.Services;
 public class RawgService(
     ILogger<RawgService> logger,
     IHttpClientFactory httpClientFactory)
+    : IRawgService
 {
     private readonly ILogger<RawgService> _logger = logger;
     private readonly HttpClient _client = httpClientFactory.CreateClient("rawg");

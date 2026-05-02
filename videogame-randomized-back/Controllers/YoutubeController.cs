@@ -6,7 +6,7 @@ namespace videogame_randomized_back.Controllers;
 
 [ApiController]
 [Route("api/youtube")]
-public class YoutubeController(YoutubeService youtube) : ControllerBase
+public class YoutubeController(IYoutubeService youtube) : ControllerBase
 {
     private const string MissingKeyType = "urn:videogame-randomizer:youtube:missing-api-key";
 

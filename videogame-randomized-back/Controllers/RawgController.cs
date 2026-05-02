@@ -5,7 +5,7 @@ namespace videogame_randomized_back.Controllers;
 
 [ApiController]
 [Route("api/rawg")]
-public class RawgController(RawgService rawg) : ControllerBase
+public class RawgController(IRawgService rawg) : ControllerBase
 {
     private const string MissingKeyType = "urn:videogame-randomizer:rawg:missing-api-key";
 

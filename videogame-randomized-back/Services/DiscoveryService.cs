@@ -12,7 +12,7 @@ namespace videogame_randomized_back.Services;
 public class DiscoveryService(
     ILogger<DiscoveryService> logger,
     AppDbContext db,
-    RawgService rawg,
+    IRawgService rawg,
     IMemoryCache cache)
 {
     private const int PageSize = 40;
