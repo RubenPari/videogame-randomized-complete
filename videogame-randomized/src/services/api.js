@@ -66,6 +66,16 @@ export default {
   },
 
   /**
+   * Retrieves a single random game chosen by the backend discovery endpoint.
+   * This avoids client-side multi-page probing and 404 storms.
+   * @param {Object} params
+   * @returns {Promise}
+   */
+  getRandomDiscovery(params = {}) {
+    return httpClient.get('/discovery/random', { params })
+  },
+
+  /**
    * Retrieves complete details of a specific game
    * Includes additional information such as full description, screenshots, etc.
    * @param {number|string} gameId - Unique game ID
