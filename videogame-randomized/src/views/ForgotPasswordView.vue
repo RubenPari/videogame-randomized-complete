@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import authService from '@/services/auth'
@@ -6,18 +6,18 @@ import { getApiErrorMessage } from '@/utils/apiError'
 
 const { t } = useI18n()
 
-const email = ref('')
-const isLoading = ref(false)
-const success = ref(false)
-const error = ref('')
+const email = ref<string>('')
+const isLoading = ref<boolean>(false)
+const success = ref<boolean>(false)
+const error = ref<string>('')
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   error.value = ''
   isLoading.value = true
   try {
     await authService.forgotPassword(email.value)
     success.value = true
-  } catch (err) {
+  } catch (err: unknown) {
     error.value = getApiErrorMessage(err, t('error.generic'))
   } finally {
     isLoading.value = false

@@ -1,33 +1,30 @@
-<script setup>
-import { ref, onMounted } from 'vue'
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
 import { useVaultStore } from '@/stores/useVaultStore'
 import { useGameDiscovery } from '@/composables/useGameDiscovery'
 import apiService from '@/services/api'
+import type { GenreDto, PlatformDto, GameDto } from '@/types/api-dtos'
 
-// Components
 import FilterSection from '@/components/FilterSection.vue'
 import GameCard from '@/components/GameCard.vue'
 import GameStatePlaceholder from '@/components/base/GameStatePlaceholder.vue'
 
-// Store & Composable
 const vault = useVaultStore()
 const discovery = useGameDiscovery()
 
-// Local State
-const genres = ref([])
-const platforms = ref([])
+const genres = ref<GenreDto[]>([])
+const platforms = ref<PlatformDto[]>([])
 
-/**
- * Initial load: populate genres, platforms and vault data
- */
+const currentGame = computed<GameDto | null>(() => discovery.currentGame.value as unknown as GameDto | null)
+
 onMounted(async () => {
   try {
     const [genresRes, platformsRes] = await Promise.all([
       apiService.getGenres(),
       apiService.getPlatforms()
     ])
-    genres.value = genresRes.data.results
-    platforms.value = platformsRes.data.results
+    genres.value = (genresRes.data as { results: GenreDto[] }).results
+    platforms.value = (platformsRes.data as { results: PlatformDto[] }).results
     await Promise.all([
       vault.loadVault(),
       discovery.loadPastHistory()
@@ -56,8 +53,8 @@ onMounted(async () => {
     <div class="w-full lg:w-2/3 space-y-8 flex flex-col">
       <div class="min-h-[400px] flex flex-col relative">
         <GameCard
-          v-if="discovery.currentGame.value"
-          :game="discovery.currentGame.value"
+          v-if="currentGame"
+          :game="currentGame"
           :description="discovery.gameDescription.value"
           class="animate-fade-in"
         />

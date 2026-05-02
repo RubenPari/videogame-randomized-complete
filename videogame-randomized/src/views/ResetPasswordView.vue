@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -9,25 +9,25 @@ const { t } = useI18n()
 
 const route = useRoute()
 
-const newPassword = ref('')
-const confirmPassword = ref('')
-const isLoading = ref(false)
-const success = ref(false)
-const error = ref('')
+const newPassword = ref<string>('')
+const confirmPassword = ref<string>('')
+const isLoading = ref<boolean>(false)
+const success = ref<boolean>(false)
+const error = ref<string>('')
 
-const userId = ref('')
-const token = ref('')
+const userId = ref<string>('')
+const token = ref<string>('')
 
 onMounted(() => {
-  userId.value = route.query.userId || ''
-  token.value = route.query.token || ''
+  userId.value = (route.query.userId as string) || ''
+  token.value = (route.query.token as string) || ''
 
   if (!userId.value || !token.value) {
     error.value = t('auth.invalid_reset_link')
   }
 })
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   error.value = ''
 
   if (newPassword.value !== confirmPassword.value) {
@@ -39,7 +39,7 @@ const handleSubmit = async () => {
   try {
     await authService.resetPassword(userId.value, token.value, newPassword.value)
     success.value = true
-  } catch (err) {
+  } catch (err: unknown) {
     error.value = getApiErrorMessage(err, t('auth.reset_failed'))
   } finally {
     isLoading.value = false

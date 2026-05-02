@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -13,20 +13,20 @@ const router = useRouter()
 const authStore = useAuthStore()
 const toastStore = useToastStore()
 
-const email = ref('')
-const password = ref('')
-const isLoading = ref(false)
-const error = ref('')
-const showResendConfirmation = ref(false)
-const resendLoading = ref(false)
+const email = ref<string>('')
+const password = ref<string>('')
+const isLoading = ref<boolean>(false)
+const error = ref<string>('')
+const showResendConfirmation = ref<boolean>(false)
+const resendLoading = ref<boolean>(false)
 
-const canResendConfirmation = computed(() => email.value.trim().length > 0 && password.value.trim().length > 0)
+const canResendConfirmation = computed<boolean>(() => email.value.trim().length > 0 && password.value.trim().length > 0)
 
 watch([email, password], () => {
   showResendConfirmation.value = false
 })
 
-const handleLogin = async () => {
+const handleLogin = async (): Promise<void> => {
   error.value = ''
   showResendConfirmation.value = false
   isLoading.value = true
@@ -34,7 +34,7 @@ const handleLogin = async () => {
     await authStore.login(email.value, password.value)
     toastStore.showToast('Welcome back!', 'success')
     router.push('/')
-  } catch (err) {
+  } catch (err: unknown) {
     error.value = getApiErrorMessage(err, t('error.generic'))
     if (isEmailNotConfirmedLoginError(err)) {
       showResendConfirmation.value = true
@@ -44,7 +44,7 @@ const handleLogin = async () => {
   }
 }
 
-const handleResendConfirmation = async () => {
+const handleResendConfirmation = async (): Promise<void> => {
   if (!canResendConfirmation.value) return
   resendLoading.value = true
   try {
@@ -54,7 +54,7 @@ const handleResendConfirmation = async () => {
     } else {
       toastStore.showToast(t('auth.confirmation_resent'), 'success')
     }
-  } catch (err) {
+  } catch (err: unknown) {
     toastStore.showToast(getApiErrorMessage(err, t('error.generic')), 'error')
   } finally {
     resendLoading.value = false

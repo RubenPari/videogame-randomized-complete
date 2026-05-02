@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, defineAsyncComponent } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -20,17 +20,27 @@ const router = useRouter()
 const authStore = useAuthStore()
 const toastStore = useToastStore()
 
-const showSavedGamesModal = ref(false)
-const showDiscoveredTitlesModal = ref(false)
-const showChangePassword = ref(false)
+const showSavedGamesModal = ref<boolean>(false)
+const showDiscoveredTitlesModal = ref<boolean>(false)
+const showChangePassword = ref<boolean>(false)
 
-const openVault = () => (showSavedGamesModal.value = true)
-const closeVault = () => (showSavedGamesModal.value = false)
-const openDiscoveredTitles = () => (showDiscoveredTitlesModal.value = true)
-const closeDiscoveredTitles = () => (showDiscoveredTitlesModal.value = false)
-const openChangePassword = () => (showChangePassword.value = true)
+const openVault = (): void => {
+  showSavedGamesModal.value = true
+}
+const closeVault = (): void => {
+  showSavedGamesModal.value = false
+}
+const openDiscoveredTitles = (): void => {
+  showDiscoveredTitlesModal.value = true
+}
+const closeDiscoveredTitles = (): void => {
+  showDiscoveredTitlesModal.value = false
+}
+const openChangePassword = (): void => {
+  showChangePassword.value = true
+}
 
-const handleLogout = () => {
+const handleLogout = (): void => {
   authStore.logout()
   toastStore.showToast(t('home.logged_out'), 'success')
   router.push('/login')

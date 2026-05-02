@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/useAuthStore'
@@ -10,21 +10,21 @@ const { t } = useI18n()
 const authStore = useAuthStore()
 const toastStore = useToastStore()
 
-const email = ref('')
-const password = ref('')
-const confirmPassword = ref('')
-const isLoading = ref(false)
-const error = ref('')
-const success = ref(false)
+const email = ref<string>('')
+const password = ref<string>('')
+const confirmPassword = ref<string>('')
+const isLoading = ref<boolean>(false)
+const error = ref<string>('')
+const success = ref<boolean>(false)
 
-const handleRegister = async () => {
+const handleRegister = async (): Promise<void> => {
   error.value = ''
   isLoading.value = true
   try {
     await authStore.register(email.value, password.value, confirmPassword.value)
     success.value = true
     toastStore.showToast('Registration successful!', 'success')
-  } catch (err) {
+  } catch (err: unknown) {
     error.value = getApiErrorMessage(err, t('error.generic'))
   } finally {
     isLoading.value = false

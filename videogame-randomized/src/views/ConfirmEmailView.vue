@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -9,13 +9,13 @@ const { t } = useI18n()
 
 const route = useRoute()
 
-const isLoading = ref(true)
-const success = ref(false)
-const error = ref('')
+const isLoading = ref<boolean>(true)
+const success = ref<boolean>(false)
+const error = ref<string>('')
 
 onMounted(async () => {
-  const userId = route.query.userId
-  const token = route.query.token
+  const userId = route.query.userId as string
+  const token = route.query.token as string
 
   if (!userId || !token) {
     error.value = t('auth.invalid_confirmation')
@@ -26,7 +26,7 @@ onMounted(async () => {
   try {
     await authService.confirmEmail(userId, token)
     success.value = true
-  } catch (err) {
+  } catch (err: unknown) {
     error.value = getApiErrorMessage(err, t('auth.confirmation_failed_desc'))
   } finally {
     isLoading.value = false
