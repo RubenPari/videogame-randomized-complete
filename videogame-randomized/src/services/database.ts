@@ -1,15 +1,10 @@
 import httpClient from './httpClient'
+import type { GameDto, GameStatsDto, RawgGameLike, UpdateGameDto } from '@/types/api-dtos'
 
-/**
- * Saved games API client (ASP.NET Core `/api/saved-games`). Uses camelCase JSON matching backend DTOs.
- */
 const databaseService = {
-  /**
-   * @returns {Promise<import('@/types/api-dtos').GameDto[]>}
-   */
-  async getSavedGames() {
+  async getSavedGames(): Promise<GameDto[]> {
     try {
-      const response = await httpClient.get('/saved-games')
+      const response = await httpClient.get<GameDto[]>('/saved-games')
       return response.data || []
     } catch (error) {
       console.error('Error retrieving saved games:', error)
@@ -17,13 +12,9 @@ const databaseService = {
     }
   },
 
-  /**
-   * @param {number} gameId
-   * @returns {Promise<boolean>}
-   */
-  async isGameSaved(gameId) {
+  async isGameSaved(gameId: number): Promise<boolean> {
     try {
-      const response = await httpClient.get(`/saved-games/check/${gameId}`)
+      const response = await httpClient.get<{ isSaved: boolean }>(`/saved-games/check/${gameId}`)
       return response.data.isSaved || false
     } catch (error) {
       console.error('Error checking if game is saved:', error)
@@ -31,11 +22,7 @@ const databaseService = {
     }
   },
 
-  /**
-   * @param {import('@/types/api-dtos').RawgGameLike} game
-   * @returns {Promise<boolean>}
-   */
-  async saveGame(game) {
+  async saveGame(game: RawgGameLike): Promise<boolean> {
     try {
       const gameToSave = {
         id: game.id,
@@ -61,8 +48,9 @@ const databaseService = {
         return true
       }
       return false
-    } catch (error) {
-      if (error.response?.status === 409) {
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { status?: number } }
+      if (axiosError.response?.status === 409) {
         return false
       }
       console.error('Error saving game:', error)
@@ -70,11 +58,7 @@ const databaseService = {
     }
   },
 
-  /**
-   * @param {number} gameId
-   * @returns {Promise<boolean>}
-   */
-  async removeGame(gameId) {
+  async removeGame(gameId: number): Promise<boolean> {
     try {
       const response = await httpClient.delete(`/saved-games/${gameId}`)
 
@@ -82,8 +66,9 @@ const databaseService = {
         return true
       }
       return false
-    } catch (error) {
-      if (error.response?.status === 404) {
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { status?: number } }
+      if (axiosError.response?.status === 404) {
         return false
       }
       console.error('Error removing game:', error)
@@ -91,16 +76,13 @@ const databaseService = {
     }
   },
 
-  /**
-   * @param {number} gameId
-   * @returns {Promise<import('@/types/api-dtos').GameDto|null>}
-   */
-  async getSavedGame(gameId) {
+  async getSavedGame(gameId: number): Promise<GameDto | null> {
     try {
-      const response = await httpClient.get(`/saved-games/${gameId}`)
+      const response = await httpClient.get<GameDto>(`/saved-games/${gameId}`)
       return response.data || null
-    } catch (error) {
-      if (error.response?.status === 404) {
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { status?: number } }
+      if (axiosError.response?.status === 404) {
         return null
       }
       console.error('Error retrieving saved game:', error)
@@ -108,10 +90,7 @@ const databaseService = {
     }
   },
 
-  /**
-   * @returns {Promise<boolean>}
-   */
-  async clearAllSavedGames() {
+  async clearAllSavedGames(): Promise<boolean> {
     try {
       const response = await httpClient.delete('/saved-games')
 
@@ -125,12 +104,9 @@ const databaseService = {
     }
   },
 
-  /**
-   * @returns {Promise<import('@/types/api-dtos').GameStatsDto>}
-   */
-  async getStatistics() {
+  async getStatistics(): Promise<GameStatsDto> {
     try {
-      const response = await httpClient.get('/saved-games/statistics')
+      const response = await httpClient.get<{ statistics: GameStatsDto }>('/saved-games/statistics')
       return (
         response.data.statistics || {
           totalGames: 0,
@@ -145,13 +121,9 @@ const databaseService = {
     }
   },
 
-  /**
-   * @param {string} query
-   * @returns {Promise<import('@/types/api-dtos').GameDto[]>}
-   */
-  async searchSavedGames(query) {
+  async searchSavedGames(query: string): Promise<GameDto[]> {
     try {
-      const response = await httpClient.get(`/saved-games/search?q=${encodeURIComponent(query)}`)
+      const response = await httpClient.get<{ games: GameDto[] }>(`/saved-games/search?q=${encodeURIComponent(query)}`)
       return response.data.games || []
     } catch (error) {
       console.error('Error searching saved games:', error)
@@ -159,13 +131,7 @@ const databaseService = {
     }
   },
 
-  /**
-   * Personal note and rating use `PUT /saved-games/{id}` with UpdateGameDto (`personalRating`, `note`).
-   * @param {number} gameId
-   * @param {import('@/types/api-dtos').UpdateGameDto} updateData
-   * @returns {Promise<boolean>}
-   */
-  async updateSavedGame(gameId, updateData) {
+  async updateSavedGame(gameId: number, updateData: UpdateGameDto): Promise<boolean> {
     try {
       const response = await httpClient.put(`/saved-games/${gameId}`, updateData)
 
@@ -179,10 +145,7 @@ const databaseService = {
     }
   },
 
-  /**
-   * @returns {Promise<unknown>}
-   */
-  async exportSavedGames() {
+  async exportSavedGames(): Promise<unknown> {
     try {
       const response = await httpClient.get('/saved-games/export')
       return response.data
@@ -192,11 +155,7 @@ const databaseService = {
     }
   },
 
-  /**
-   * @param {unknown} importData
-   * @returns {Promise<boolean>}
-   */
-  async importSavedGames(importData) {
+  async importSavedGames(importData: unknown): Promise<boolean> {
     try {
       const response = await httpClient.post('/saved-games/import', importData)
 
