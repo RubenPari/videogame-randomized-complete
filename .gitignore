@@ -8,3 +8,4 @@ videogame-randomized/.env.production
 .kilo/
 .cursor/
 .claude/
+.pi/
