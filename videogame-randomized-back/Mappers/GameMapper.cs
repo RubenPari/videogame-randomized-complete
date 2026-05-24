@@ -19,11 +19,6 @@ public partial class GameMapper
     [MapperIgnoreTarget(nameof(Game.User))]
     public partial Game CreateDtoToGame(CreateGameDto dto);
 
-    [MapperIgnoreTarget(nameof(Game.SavedAt))]
-    [MapperIgnoreTarget(nameof(Game.UserId))]
-    [MapperIgnoreTarget(nameof(Game.User))]
-    public partial void UpdateGameDtoToGame(UpdateGameDto dto, Game game);
-
     [MapperIgnoreSource(nameof(Genre.Games))]
     private partial GenreDto GenreToDto(Genre genre);
 
@@ -35,6 +30,4 @@ public partial class GameMapper
 
     [MapperIgnoreTarget(nameof(Platform.Games))]
     private partial Platform DtoToPlatform(PlatformDto dto);
-    
-    public partial GameStatsDto StatsToDto(StatisticsDto stats);
 }

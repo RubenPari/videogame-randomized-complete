@@ -99,23 +99,15 @@ export interface GameShape {
   userId?: string
 }
 
-/**
- * Combined game type that supports both backend DTO (camelCase) and RAWG API (snake_case, nested platforms).
- */
-export interface GameShape {
-  id: number
-  name: string
-  backgroundImage?: string
-  background_image?: string
-  rating: number
-  released?: string
-  genres?: (GenreDto | RawgGenreLike)[]
-  platforms?: (PlatformDto | RawgPlatformLike)[]
-  metacritic?: number
-  descriptionRaw?: string
-  description_raw?: string
-  personalRating?: number
-  note?: string
-  savedAt?: string
-  userId?: string
+export interface RawgListResponse<T> {
+  results: T[]
+  count: number
+  next?: string | null
+  previous?: string | null
+}
+
+export interface DiscoveryRandomResponse {
+  success: boolean
+  game?: Record<string, unknown>
+  error?: string
 }

@@ -85,14 +85,13 @@ const toggleSaveGame = async (): Promise<void> => {
 
   try {
     if (!('savedAt' in props.game)) return
-    if (!('savedAt' in props.game)) return
     const saved = await vault.toggleGame(props.game as GameDto)
     toastSession.showToast(
       saved ? t('game.added_success') : t('game.removed_success'),
       'success'
     )
   } catch {
-    toastSession.showToast('Vault error: transmission failed', 'error')
+    toastSession.showToast(t('vault.error'), 'error')
   }
 }
 

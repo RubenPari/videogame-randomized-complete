@@ -5,7 +5,7 @@ using videogame_randomized_back.Models;
 
 namespace videogame_randomized_back.Services;
 
-public class GamesService(AppDbContext db)
+public class GamesService(AppDbContext db) : IGamesService
 {
     public async Task<List<Game>> GetByUserAsync(string userId)
     {
@@ -44,7 +44,7 @@ public class GamesService(AppDbContext db)
             .ToListAsync();
     }
 
-    public async Task<StatisticsDto> GetStatisticsByUserAsync(string userId)
+    public async Task<GameStatsDto> GetStatisticsByUserAsync(string userId)
     {
         var games = await db.Games
             .AsNoTracking()
@@ -55,7 +55,7 @@ public class GamesService(AppDbContext db)
 
         if (games.Count == 0)
         {
-            return new StatisticsDto
+            return new GameStatsDto
             {
                 TotalGames = 0,
                 AverageRating = 0,
@@ -64,7 +64,7 @@ public class GamesService(AppDbContext db)
             };
         }
 
-        return new StatisticsDto
+        return new GameStatsDto
         {
             TotalGames = games.Count,
             AverageRating = games.Average(g => g.Rating),
@@ -101,21 +101,16 @@ public class GamesService(AppDbContext db)
         await db.SaveChangesAsync();
     }
 
-    public async Task UpdateAsync(Game updatedGame)
-    {
-        await SyncGenresAndPlatforms(updatedGame);
-        db.Games.Update(updatedGame);
-        await db.SaveChangesAsync();
-    }
-
-    public async Task RemoveAsync(int id)
+    public async Task<bool> RemoveAsync(string userId, int id)
     {
         var game = await db.Games.FindAsync(id);
-        if (game != null)
+        if (game != null && game.UserId == userId)
         {
             db.Games.Remove(game);
             await db.SaveChangesAsync();
+            return true;
         }
+        return false;
     }
 
     public async Task UpsertManyAsync(string userId, IEnumerable<Game> games)

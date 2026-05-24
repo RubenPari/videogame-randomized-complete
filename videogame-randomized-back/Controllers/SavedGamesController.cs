@@ -10,7 +10,7 @@ namespace videogame_randomized_back.Controllers;
 [ApiController]
 [Route("api/saved-games")]
 [Authorize]
-public class SavedGamesController(GamesService service, GameMapper mapper) : ControllerBase
+public class SavedGamesController(IGamesService service, GameMapper mapper) : ControllerBase
 {
     private string GetUserId() =>
         User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -86,8 +86,8 @@ public class SavedGamesController(GamesService service, GameMapper mapper) : Con
     public async Task<IActionResult> DeleteSavedGame(int id)
     {
         var userId = GetUserId();
-        if (!await service.ExistsByUserAsync(userId, id)) return NotFound();
-        await service.RemoveAsync(id);
+        var removed = await service.RemoveAsync(userId, id);
+        if (!removed) return NotFound();
         return Ok();
     }
 
@@ -124,7 +124,7 @@ public class SavedGamesController(GamesService service, GameMapper mapper) : Con
     {
         var userId = GetUserId();
         var stats = await service.GetStatisticsByUserAsync(userId);
-        return Ok(new StatisticsResponseDto(mapper.StatsToDto(stats)));
+        return Ok(new StatisticsResponseDto(stats));
     }
 
     /// <summary>

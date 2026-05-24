@@ -1,9 +1,30 @@
 import type { AxiosResponse } from 'axios'
 import translationService from './translation'
 import httpClient from './httpClient'
+import type {
+  RawgGameLike,
+  RawgGenreLike,
+  RawgListResponse,
+  RawgPlatformLike,
+  DiscoveryRandomResponse,
+} from '@/types/api-dtos'
+
+interface Screenshot {
+  id: number
+  image: string
+}
+
+interface Movie {
+  name?: string
+  preview?: string
+  data?: {
+    max?: string
+    '480'?: string
+  }
+}
 
 interface RawgClient {
-  get: (path: string, config?: Record<string, unknown>) => Promise<AxiosResponse<unknown>>
+  get<T>(path: string, config?: Record<string, unknown>): Promise<AxiosResponse<T>>
 }
 
 const rawgClient: RawgClient = {
@@ -32,34 +53,34 @@ interface RandomDiscoveryParams {
 let youtubeQuotaExceeded = false
 
 export default {
-  getGenres(): Promise<AxiosResponse<unknown>> {
-    return rawgClient.get('/genres')
+  getGenres(): Promise<AxiosResponse<RawgListResponse<RawgGenreLike>>> {
+    return rawgClient.get<RawgListResponse<RawgGenreLike>>('/genres')
   },
 
-  getPlatforms(): Promise<AxiosResponse<unknown>> {
-    return rawgClient.get('/platforms')
+  getPlatforms(): Promise<AxiosResponse<RawgListResponse<RawgPlatformLike>>> {
+    return rawgClient.get<RawgListResponse<RawgPlatformLike>>('/platforms')
   },
 
-  getGames(params: GameListParams = {}): Promise<AxiosResponse<unknown>> {
-    return rawgClient.get('/games', {
+  getGames(params: GameListParams = {}): Promise<AxiosResponse<RawgListResponse<RawgGameLike>>> {
+    return rawgClient.get<RawgListResponse<RawgGameLike>>('/games', {
       params: { ...params },
     })
   },
 
-  getRandomDiscovery(params: RandomDiscoveryParams = {}): Promise<AxiosResponse<unknown>> {
-    return httpClient.get('/discovery/random', { params })
+  getRandomDiscovery(params: RandomDiscoveryParams = {}): Promise<AxiosResponse<DiscoveryRandomResponse>> {
+    return httpClient.get<DiscoveryRandomResponse>('/discovery/random', { params })
   },
 
-  getGameDetails(gameId: number | string): Promise<AxiosResponse<unknown>> {
-    return rawgClient.get(`/games/${gameId}`)
+  getGameDetails(gameId: number | string): Promise<AxiosResponse<RawgGameLike>> {
+    return rawgClient.get<RawgGameLike>(`/games/${gameId}`)
   },
 
-  getGameScreenshots(gameId: number | string): Promise<AxiosResponse<unknown>> {
-    return rawgClient.get(`/games/${gameId}/screenshots`)
+  getGameScreenshots(gameId: number | string): Promise<AxiosResponse<RawgListResponse<Screenshot>>> {
+    return rawgClient.get<RawgListResponse<Screenshot>>(`/games/${gameId}/screenshots`)
   },
 
-  getGameMovies(gameId: number | string): Promise<AxiosResponse<unknown>> {
-    return rawgClient.get(`/games/${gameId}/movies`)
+  getGameMovies(gameId: number | string): Promise<AxiosResponse<RawgListResponse<Movie>>> {
+    return rawgClient.get<RawgListResponse<Movie>>(`/games/${gameId}/movies`)
   },
 
   async searchYouTubeTrailer(gameName: string): Promise<string | null> {
