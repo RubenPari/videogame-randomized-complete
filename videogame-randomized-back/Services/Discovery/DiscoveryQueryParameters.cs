@@ -15,6 +15,9 @@ internal static class DiscoveryQueryParameters
         var endYear = request.EndYear.GetValueOrDefault(DateTime.UtcNow.Year);
         dict["dates"] = $"{startYear:D4}-01-01,{endYear:D4}-12-31";
 
+        if (request.ExcludeAdditions.GetValueOrDefault(true))
+            dict["exclude_additions"] = "true";
+
         return dict;
     }
 }

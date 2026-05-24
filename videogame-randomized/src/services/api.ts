@@ -26,6 +26,7 @@ interface RandomDiscoveryParams {
   endYear?: number
   minRating?: number
   excludeIds?: string
+  excludeAdditions?: boolean
 }
 
 let youtubeQuotaExceeded = false

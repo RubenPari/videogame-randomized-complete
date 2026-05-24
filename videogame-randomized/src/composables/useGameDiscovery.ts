@@ -77,6 +77,7 @@ export function useGameDiscovery(options?: UseGameDiscoveryOptions) {
         endYear: filters.endYear,
         minRating: filters.minRating,
         excludeIds: excludeIds || undefined,
+        excludeAdditions: filters.excludeAdditions,
       })
 
       const payload = res.data as { success?: boolean; error?: string; game?: Record<string, unknown> }

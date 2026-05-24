@@ -10,6 +10,7 @@ export interface RandomDiscoveryParams {
   endYear?: number
   minRating?: number
   excludeIds?: string
+  excludeAdditions?: boolean
 }
 
 /** RAWG + discovery random + translation behind one port for tests and swaps (DIP). */

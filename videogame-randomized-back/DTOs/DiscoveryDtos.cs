@@ -8,7 +8,8 @@ public record DiscoveryRandomRequestDto(
     int? StartYear,
     int? EndYear,
     decimal? MinRating,
-    string? ExcludeIds);
+    string? ExcludeIds,
+    bool? ExcludeAdditions);
 
 /// <summary>
 /// Discovery random response. Use HTTP 200 for business outcomes so clients (Axios) can read

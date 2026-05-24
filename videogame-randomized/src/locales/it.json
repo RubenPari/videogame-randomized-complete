@@ -61,7 +61,8 @@
     "hardware": "Hardware",
     "selected": "SEL",
     "all": "Tutti",
-    "none": "Nessuno"
+    "none": "Nessuno",
+    "exclude_expansions": "Escludi espansioni (DLC)"
   },
   "history": {
     "session_log": "Log Sessione",

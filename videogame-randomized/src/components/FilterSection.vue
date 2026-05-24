@@ -8,6 +8,7 @@ interface Filters {
   startYear: number | null
   endYear: number | null
   platforms: number[]
+  excludeAdditions: boolean
 }
 
 const props = defineProps<{
@@ -100,6 +101,20 @@ v-model="filters.minRating" type="range" min="0" max="5" step="0.1"
             <option v-for="year in availableYears" :key="'e'+year" :value="year">{{ year }}</option>
           </select>
         </div>
+      </div>
+
+      <!-- Exclude Expansions -->
+      <div class="space-y-2">
+        <label class="flex items-center justify-between cursor-pointer">
+          <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+            {{ $t('filters.exclude_expansions') }}
+          </span>
+          <div class="relative">
+            <input type="checkbox" v-model="filters.excludeAdditions" class="sr-only peer" />
+            <div class="w-9 h-5 bg-zinc-800 peer-checked:bg-cyan-500 rounded-full transition-colors"></div>
+            <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4"></div>
+          </div>
+        </label>
       </div>
 
       <!-- Hardware -->

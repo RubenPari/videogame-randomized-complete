@@ -19,6 +19,7 @@ export const filters = reactive({
   minRating: 0,
   startYear: 2010,
   endYear: new Date().getFullYear(),
+  excludeAdditions: true,
 })
 
 export const allExcludedIds = computed(() => {
