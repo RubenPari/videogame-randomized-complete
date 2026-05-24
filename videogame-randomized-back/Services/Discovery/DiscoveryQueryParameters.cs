@@ -12,8 +12,10 @@ internal static class DiscoveryQueryParameters
         if (!string.IsNullOrWhiteSpace(request.Platforms)) dict["platforms"] = request.Platforms;
 
         var startYear = request.StartYear.GetValueOrDefault(2010);
-        var endYear = request.EndYear.GetValueOrDefault(DateTime.UtcNow.Year);
-        dict["dates"] = $"{startYear:D4}-01-01,{endYear:D4}-12-31";
+        var endDate = request.EndYear.HasValue
+            ? new DateTime(request.EndYear.Value, 12, 31)
+            : DateTime.UtcNow;
+        dict["dates"] = $"{startYear:D4}-01-01,{endDate:yyyy-MM-dd}";
 
         if (request.ExcludeAdditions.GetValueOrDefault(true))
             dict["exclude_additions"] = "true";
