@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using videogame_randomized_back.DTOs;
 using videogame_randomized_back.Services;
 
 namespace videogame_randomized_back.Controllers;
@@ -9,10 +10,8 @@ public class TranslateController(ITranslateService translate) : ControllerBase
 {
     private const string MissingKeyType = "urn:videogame-randomizer:google-translate:missing-api-key";
 
-    public record TranslateRequest(string Text, string Source, string Target);
-
     [HttpPost]
-    public async Task<IActionResult> Translate([FromBody] TranslateRequest req)
+    public async Task<IActionResult> Translate([FromBody] TranslateRequestDto req)
     {
         if (!translate.IsConfigured)
         {
@@ -25,7 +24,10 @@ public class TranslateController(ITranslateService translate) : ControllerBase
 
         if (string.IsNullOrWhiteSpace(req.Text))
         {
-            return BadRequest(new { error = "Text is required" });
+            return Problem(
+                title: "Validation Error",
+                detail: "Text is required",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         var source = string.IsNullOrWhiteSpace(req.Source) ? "en" : req.Source;
@@ -41,4 +43,3 @@ public class TranslateController(ITranslateService translate) : ControllerBase
         };
     }
 }
-

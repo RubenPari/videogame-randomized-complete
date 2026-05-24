@@ -316,7 +316,11 @@ public class DiscoveryService(
         DiscoveryMetrics metrics,
         CancellationToken cancellationToken)
     {
-        var cacheKey = $"discovery:count:{baseParams.GetHashCode()}";
+        var sortedParams = baseParams
+            .Where(kv => !string.IsNullOrWhiteSpace(kv.Value))
+            .OrderBy(kv => kv.Key)
+            .Select(kv => $"{kv.Key}={kv.Value}");
+        var cacheKey = $"discovery:count:{string.Join("&", sortedParams)}";
         if (cache.TryGetValue<long>(cacheKey, out var cached))
             return cached;
 

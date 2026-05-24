@@ -160,40 +160,31 @@ public class GamesService(AppDbContext db) : IGamesService
 
     private async Task SyncGenresAndPlatforms(Game game)
     {
-        var syncedGenres = new List<Genre>();
-        foreach (var genre in game.Genres)
-        {
-            var tracked = db.ChangeTracker.Entries<Genre>()
-                .FirstOrDefault(e => e.Entity.Id == genre.Id)?.Entity;
+        var genreIds = game.Genres.Select(g => g.Id).ToHashSet();
+        var platformIds = game.Platforms.Select(p => p.Id).ToHashSet();
 
-            if (tracked != null)
-            {
-                syncedGenres.Add(tracked);
-            }
-            else
-            {
-                var existing = await db.Genres.FindAsync(genre.Id);
-                syncedGenres.Add(existing ?? genre);
-            }
-        }
-        game.Genres = syncedGenres;
+        var existingGenres = await db.Genres
+            .Where(g => genreIds.Contains(g.Id))
+            .ToDictionaryAsync(g => g.Id);
 
-        var syncedPlatforms = new List<Platform>();
-        foreach (var platform in game.Platforms)
-        {
-            var tracked = db.ChangeTracker.Entries<Platform>()
-                .FirstOrDefault(e => e.Entity.Id == platform.Id)?.Entity;
+        var existingPlatforms = await db.Platforms
+            .Where(p => platformIds.Contains(p.Id))
+            .ToDictionaryAsync(p => p.Id);
 
-            if (tracked != null)
-            {
-                syncedPlatforms.Add(tracked);
-            }
-            else
-            {
-                var existing = await db.Platforms.FindAsync(platform.Id);
-                syncedPlatforms.Add(existing ?? platform);
-            }
-        }
-        game.Platforms = syncedPlatforms;
+        var trackedGenres = db.ChangeTracker.Entries<Genre>()
+            .ToDictionary(e => e.Entity.Id, e => e.Entity);
+
+        var trackedPlatforms = db.ChangeTracker.Entries<Platform>()
+            .ToDictionary(e => e.Entity.Id, e => e.Entity);
+
+        game.Genres = game.Genres.Select(g =>
+            trackedGenres.TryGetValue(g.Id, out var tracked) ? tracked :
+            existingGenres.TryGetValue(g.Id, out var existing) ? existing : g
+        ).ToList();
+
+        game.Platforms = game.Platforms.Select(p =>
+            trackedPlatforms.TryGetValue(p.Id, out var tracked) ? tracked :
+            existingPlatforms.TryGetValue(p.Id, out var existing) ? existing : p
+        ).ToList();
     }
 }

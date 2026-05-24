@@ -11,7 +11,6 @@ export const isLoading = ref(false)
 export const error = ref<string | null>(null)
 export const gameHistory = ref<DiscoveryEntry[]>([])
 export const pastHistory = ref<DiscoveryEntry[]>([])
-export const totalGamesCount = ref(0)
 
 export const filters = reactive({
   genre: '',
