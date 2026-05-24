@@ -107,7 +107,7 @@ v-model="searchQuery" type="text" :placeholder="$t('vault_modal.search_placehold
             </div>
 
             <!-- List -->
-            <div v-else class="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-2">
+            <div v-else class="flex-1 overflow-y-auto custom-scrollbar-wide pr-2 pb-2">
               <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div v-for="game in filteredGames" :key="game.id" class="flex bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden group hover:border-zinc-700 transition-all h-32">
                   <div class="w-32 h-full flex-shrink-0 bg-zinc-900">
@@ -142,8 +142,4 @@ v-model="searchQuery" type="text" :placeholder="$t('vault_modal.search_placehold
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 .fade-enter-active .relative, .fade-leave-active .relative { transition: all 0.2s ease; }
 .fade-enter-from .relative, .fade-leave-to .relative { transform: scale(0.98) translateY(10px); }
-.custom-scrollbar::-webkit-scrollbar { width: 6px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 </style>

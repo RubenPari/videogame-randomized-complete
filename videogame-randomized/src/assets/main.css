@@ -83,6 +83,15 @@ body {
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
   }
+
+  .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 2px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+  .custom-scrollbar-wide::-webkit-scrollbar { width: 6px; }
+  .custom-scrollbar-wide::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar-wide::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+  .custom-scrollbar-wide::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 }
 
 /* Enhanced focus states */

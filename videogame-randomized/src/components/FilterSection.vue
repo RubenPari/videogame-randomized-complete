@@ -163,10 +163,3 @@ v-model="filters.platforms" type="checkbox" :value="platform.id"
     </button>
   </div>
 </template>
-
-<style scoped>
-.custom-scrollbar::-webkit-scrollbar { width: 4px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 2px; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
-</style>

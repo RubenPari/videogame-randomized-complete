@@ -6,7 +6,7 @@ internal static class DiscoveryFallbackPages
     {
         var maxPage = (int)Math.Min((count + pageSize - 1) / pageSize, int.MaxValue);
         var pages = new HashSet<int>();
-        var rng = new Random();
+        var rng = Random.Shared;
 
         for (var i = 0; i < numPages * 3 && pages.Count < numPages; i++)
         {

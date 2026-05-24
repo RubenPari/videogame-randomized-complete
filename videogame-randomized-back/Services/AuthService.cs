@@ -12,7 +12,7 @@ public class AuthService(
     UserManager<AppUser> userManager, 
     EmailService emailService,
     IJwtTokenService jwtTokenService,
-    ILogger<AuthService> logger)
+    ILogger<AuthService> logger) : IAuthService
 {
     private readonly IJwtTokenService _jwtTokenService = jwtTokenService;
 

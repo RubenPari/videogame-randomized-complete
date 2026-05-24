@@ -9,7 +9,7 @@ namespace videogame_randomized_back.Services;
 public class EmailService(
     ILogger<EmailService> logger,
     IHttpClientFactory httpClientFactory,
-    IOptions<EmailSettings> emailSettings)
+    IOptions<EmailSettings> emailSettings) : IEmailService
 {
     private readonly ILogger<EmailService> _logger = logger;
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;

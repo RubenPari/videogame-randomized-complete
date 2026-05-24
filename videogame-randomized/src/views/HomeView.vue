@@ -24,7 +24,12 @@ onMounted(async () => {
       apiService.getPlatforms()
     ])
     genres.value = (genresRes.data as { results: GenreDto[] }).results
-    platforms.value = (platformsRes.data as { results: PlatformDto[] }).results
+    const rawPlatforms = platformsRes.data.results
+    platforms.value = rawPlatforms.map((p) => ({
+      id: p.platform.id,
+      name: p.platform.name,
+      slug: p.platform.slug,
+    }))
     await Promise.all([
       vault.loadVault(),
       discovery.loadPastHistory()

@@ -8,8 +8,8 @@ export async function loadTranslatedGameDescription(
   try {
     gameDescription.value = 'Decrypting database entry...'
     const response = await api.getGameDetails(gameId)
-    const data = response.data as { description?: string }
-    const englishDescription = data.description
+    const data = response.data as { description_raw?: string }
+    const englishDescription = data.description_raw
     gameDescription.value = await api.translateGameDescription(englishDescription || '')
   } catch (err) {
     console.error('Translation failure:', err)

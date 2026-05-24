@@ -14,7 +14,7 @@ public class DiscoveryService(
     ILogger<DiscoveryService> logger,
     AppDbContext db,
     IRawgService rawg,
-    IMemoryCache cache)
+    IMemoryCache cache) : IDiscoveryService
 {
     private sealed class DiscoveryMetrics
     {

@@ -29,7 +29,8 @@
     "sort_rating": "Voto",
     "sort_release": "Data di Uscita",
     "remove_button": "Rimuovi",
-    "view_details": "Dettagli"
+    "view_details": "Dettagli",
+    "error": "Errore cassaforte: trasmissione fallita"
   },
   "game": {
     "release_date": "Data di uscita",
@@ -106,6 +107,8 @@
     "sign_in_link": "Accedi",
     "remember_password": "Ricordi la password?",
     "back_to_login": "Torna al Login",
+    "welcome_back": "Bentornato!",
+    "registration_success": "Registrazione completata con successo!",
     "check_email": "Controlla la tua Email",
     "confirmation_sent": "Ti abbiamo inviato un link di conferma a {email}. Clicca sul link per attivare il tuo account.",
     "reset_link_sent": "Se esiste un account per {email}, ti abbiamo inviato un link per reimpostare la password.",

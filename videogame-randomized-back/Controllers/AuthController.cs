@@ -10,8 +10,8 @@ namespace videogame_randomized_back.Controllers;
 [ApiController]
 [Route("api/auth")]
 public class AuthController(
-    AuthService authService,
-    EmailService emailService,
+    IAuthService authService,
+    IEmailService emailService,
     ILogger<AuthController> logger) : ControllerBase
 {
     /// <summary>

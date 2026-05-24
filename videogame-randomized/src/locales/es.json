@@ -29,7 +29,8 @@
     "sort_rating": "Valoración",
     "sort_release": "Fecha de Lanzamiento",
     "remove_button": "Eliminar",
-    "view_details": "Ver Detalles"
+    "view_details": "Ver Detalles",
+    "error": "Error de bóveda: transmisión fallida"
   },
   "game": {
     "release_date": "Lanzamiento",
@@ -106,6 +107,8 @@
     "sign_in_link": "Iniciar sesión",
     "remember_password": "¿Recuerdas tu contraseña?",
     "back_to_login": "Volver al Login",
+    "welcome_back": "¡Bienvenido de nuevo!",
+    "registration_success": "¡Registro exitoso!",
     "check_email": "Revisa tu Correo",
     "confirmation_sent": "Hemos enviado un enlace de confirmación a {email}. Por favor, haz clic en el enlace para activar tu cuenta.",
     "reset_link_sent": "Si existe una cuenta para {email}, hemos enviado un enlace para restablecer la contraseña.",

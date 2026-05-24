@@ -54,12 +54,12 @@ const preloadDetails = async (entries: GameEntry[]): Promise<void> => {
 
       try {
         const res = await apiService.getGameDetails(id)
-        const g = res?.data as Record<string, unknown>
+        const g = res?.data
         detailsById.value.set(id, {
           id,
-          background_image: g?.background_image as string | undefined,
+          background_image: g?.background_image,
           rating: typeof g?.rating === 'number' ? g.rating : null,
-          released: (g?.released as string) || null,
+          released: g?.released || null,
         })
       } catch {
         // Non-blocking: we'll keep the entry text-only if details fail.
@@ -179,7 +179,7 @@ const clearAll = async (): Promise<void> => {
               </p>
             </div>
 
-            <div v-else class="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-2">
+            <div v-else class="flex-1 overflow-y-auto custom-scrollbar-wide pr-2 pb-2">
               <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div
                   v-for="g in filtered"
@@ -249,8 +249,4 @@ const clearAll = async (): Promise<void> => {
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 .fade-enter-active .relative, .fade-leave-active .relative { transition: all 0.2s ease; }
 .fade-enter-from .relative, .fade-leave-to .relative { transform: scale(0.98) translateY(10px); }
-.custom-scrollbar::-webkit-scrollbar { width: 6px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 </style>

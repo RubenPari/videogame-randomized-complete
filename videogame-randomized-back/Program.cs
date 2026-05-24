@@ -29,7 +29,8 @@ var dbUser = GetEnvOrDefault("DB_USER", "root");
 var dbPassword = GetEnvOrDefault("DB_PASSWORD", "password");
 var connectionString = $"Server={dbHost};Database={dbName};Uid={dbUser};Pwd={dbPassword};";
 
-var jwtSecret = GetEnvOrDefault("JWT_SECRET", "fallback-secret-key-min-32-characters-long!");
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET")
+    ?? throw new InvalidOperationException("JWT_SECRET environment variable is required. Set it before starting the application.");
 var jwtIssuer = GetEnvOrDefault("JWT_ISSUER", "videogame-randomizer");
 var jwtAudience = GetEnvOrDefault("JWT_AUDIENCE", "videogame-randomizer-frontend");
 var jwtExpirationMinutes = int.Parse(GetEnvOrDefault("JWT_EXPIRATION_MINUTES", "1440"));
@@ -153,11 +154,11 @@ builder.Services.Configure<EmailSettings>(options =>
 });
 
 // Add services to the container
-builder.Services.AddScoped<GamesService>();
+builder.Services.AddScoped<IGamesService, GamesService>();
 builder.Services.AddScoped<IDiscoveryLogService, DiscoveryLogService>();
-builder.Services.AddScoped<DiscoveryService>();
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<IDiscoveryService, DiscoveryService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IRawgService, RawgService>();
 builder.Services.AddScoped<ITranslateService, TranslateService>();
