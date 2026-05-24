@@ -5,7 +5,7 @@ import { fileURLToPath, URL } from 'node:url'
 export default defineConfig({
   plugins: [vue()],
   test: {
-    environment: 'node',
+    environment: 'jsdom',
     include: ['src/**/*.test.{js,ts}'],
   },
   resolve: {
