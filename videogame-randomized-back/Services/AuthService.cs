@@ -10,7 +10,7 @@ namespace videogame_randomized_back.Services;
 /// </summary>
 public class AuthService(
     UserManager<AppUser> userManager, 
-    EmailService emailService,
+    IEmailService emailService,
     IJwtTokenService jwtTokenService,
     ILogger<AuthService> logger) : IAuthService
 {
