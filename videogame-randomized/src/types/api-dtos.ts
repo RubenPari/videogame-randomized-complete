@@ -55,7 +55,10 @@ export interface RawgGenreLike {
 }
 
 export interface RawgPlatformLike {
-  platform: {
+  id?: number
+  name?: string
+  slug?: string
+  platform?: {
     id: number
     name: string
     slug?: string

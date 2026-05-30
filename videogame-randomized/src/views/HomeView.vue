@@ -26,9 +26,9 @@ onMounted(async () => {
     genres.value = (genresRes.data as { results: GenreDto[] }).results
     const rawPlatforms = platformsRes.data.results
     platforms.value = rawPlatforms.map((p) => ({
-      id: p.platform.id,
-      name: p.platform.name,
-      slug: p.platform.slug,
+      id: p.platform?.id ?? p.id ?? 0,
+      name: p.platform?.name ?? p.name ?? '',
+      slug: p.platform?.slug ?? p.slug ?? '',
     }))
     await Promise.all([
       vault.loadVault(),

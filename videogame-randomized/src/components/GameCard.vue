@@ -158,10 +158,10 @@ v-for="genre in game.genres?.slice(0,3)" :key="genre.id"
         <div class="flex flex-wrap gap-2">
           <template v-if="Array.isArray(game.platforms)">
             <span
-              v-for="platform in game.platforms" :key="'platform' in platform ? platform.platform.id : platform.id"
+              v-for="platform in game.platforms" :key="'platform' in platform ? (platform.platform?.id ?? platform.id) : platform.id"
               class="text-xs font-mono px-2.5 py-1 bg-zinc-950 border border-zinc-800 text-zinc-400 rounded-md flex items-center gap-2">
               <span class="w-1.5 h-1.5 rounded-full bg-cyan-500/50"></span>
-              {{ 'platform' in platform ? platform.platform.name : platform.name }}
+              {{ 'platform' in platform ? (platform.platform?.name ?? platform.name) : platform.name }}
             </span>
           </template>
         </div>

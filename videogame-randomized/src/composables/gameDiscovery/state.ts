@@ -22,8 +22,8 @@ export const filters = reactive({
 })
 
 export const allExcludedIds = computed(() => {
-  const currentIds = gameHistory.value.map((g) => g.id)
-  const pastIds = pastHistory.value.map((g) => g.id)
+  const currentIds = gameHistory.value.filter((g) => g?.id).map((g) => g.id)
+  const pastIds = pastHistory.value.filter((g) => g?.id).map((g) => g.id)
   return new Set([...currentIds, ...pastIds])
 })
 

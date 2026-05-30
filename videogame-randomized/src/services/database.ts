@@ -33,9 +33,9 @@ const databaseService = {
         genres: game.genres ? game.genres.map((g) => ({ id: g.id, name: g.name, slug: g.slug })) : [],
         platforms: game.platforms
           ? game.platforms.map((p) => ({
-              id: p.platform.id,
-              name: p.platform.name,
-              slug: p.platform.slug,
+              id: p.platform?.id ?? p.id ?? 0,
+              name: p.platform?.name ?? p.name ?? '',
+              slug: p.platform?.slug ?? p.slug ?? '',
             }))
           : [],
         metacritic: game.metacritic,
