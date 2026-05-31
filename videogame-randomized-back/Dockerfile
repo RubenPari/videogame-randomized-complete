@@ -17,6 +17,7 @@ RUN dotnet publish "videogame-randomized-back.csproj" -c Release -o /app/publish
 # Final stage/image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
+ENV PORT=8080
 EXPOSE 8080
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "videogame-randomized-back.dll"]
+CMD ["sh", "-c", "ASPNETCORE_HTTP_PORTS=$PORT dotnet videogame-randomized-back.dll"]
