@@ -10,5 +10,10 @@ internal static class DiscoveryConstants
     public const int MaxUniformRepicks = 5;
     public const int MaxHighRatingRepicks = 5;
 
+    /// <summary>
+    /// RAWG API limits pagination; pages beyond this offset return 404.
+    /// </summary>
+    public const long MaxAccessibleResults = 10_000;
+
     public static readonly TimeSpan CountCacheTtl = TimeSpan.FromMinutes(5);
 }

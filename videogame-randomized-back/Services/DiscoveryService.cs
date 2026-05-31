@@ -107,10 +107,13 @@ public class DiscoveryService(
             };
         }
 
+        // Cap to RAWG's accessible range to avoid requesting pages that return 404
+        var effectiveCount = Math.Min(count, DiscoveryConstants.MaxAccessibleResults);
+
         var allResults = new List<(int Index, JsonElement Element)>();
         var anyUpstreamError = false;
 
-        var randomOffset = Random.Shared.NextInt64(0, count);
+        var randomOffset = Random.Shared.NextInt64(0, effectiveCount);
         var targetPage = (int)(randomOffset / DiscoveryConstants.PageSize) + 1;
         var targetIndex = (int)(randomOffset % DiscoveryConstants.PageSize);
 
@@ -128,7 +131,7 @@ public class DiscoveryService(
         if (allResults.Count == 0 && !anyUpstreamError)
         {
             var fallbackPages = DiscoveryFallbackPages.Generate(
-                count,
+                effectiveCount,
                 targetPage,
                 DiscoveryConstants.MaxUniformFallbackPages,
                 DiscoveryConstants.PageSize);
